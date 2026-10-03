@@ -356,7 +356,8 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
   modal.addEventListener('cancel', event => { if (savingQuotation) event.preventDefault(); });
   window.openForm = async (type) => {
     const token=++openingDocument;
-    if(!['quotation','cash_bill'].includes(type)){const result=baseOpenForm(type);if(type==='customer')window.OfficeBranch.mount(document.querySelector('#modal-content'),'00000',{before:document.querySelector('#modal-content .form-actions')});return result;}
+    modal.classList.remove('customer-friendly');modal.querySelector('[data-customer-style]')?.remove();
+    if(!['quotation','cash_bill'].includes(type)){const result=baseOpenForm(type);if(type==='customer'){window.OfficeBranch.mount(document.querySelector('#modal-content'),'00000',{before:document.querySelector('#modal-content .form-actions')});window.CustomerForm.enhance(modal);}return result;}
     if(!session)return login();
     const root=document.querySelector('#modal-content');
     if(!productsOrganizationReady||customersReadyOrg!==orgId){
@@ -498,7 +499,13 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     const data = Object.fromEntries(new FormData(event.currentTarget));
     try {
       if (modal.dataset.type === 'login') { session = await request('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify(data) }); localStorage.setItem('flowbill-session', JSON.stringify(session)); await syncAll(); modal.close(); label(); }
-      else if (modal.dataset.type === 'customer' && session && orgId) { await request('/rest/v1/customers', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ organization_id: orgId, office_code:window.OfficeBranch.read(data),office_name:window.OfficeBranch.readName(data), name: data.name, contact_name: data.contact || null, tax_id: data.taxId || null, phone: data.phone || null, credit_term_days: parseInt(data.terms) || 30 }) }); await syncCustomers(); render(); modal.close(); }
+      else if (modal.dataset.type === 'customer' && session && orgId) {
+        const form=event.currentTarget,error=form.querySelector('[data-error]');if(form.dataset.customerSaving)return;
+        let body;try{body=window.CustomerEdit.payload({...data,creditDays:data.terms});}catch(e){error.textContent=e.message;return;}
+        form.dataset.customerSaving='1';const submit=form.querySelector('button.primary');submit.disabled=true;error.textContent='กำลังบันทึก…';
+        try{await request('/rest/v1/customers',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({organization_id:orgId,...body})});modal.close();await syncCustomers();render();}
+        catch(e){error.textContent=e.message;}finally{delete form.dataset.customerSaving;submit.disabled=false;}
+      }
       else if (modal.dataset.type === 'product' && session && orgId) { await addProduct(data); modal.close(); }
       else if (modal.dataset.type === 'quotation' && session && orgId) {
         if (savingQuotation) return;

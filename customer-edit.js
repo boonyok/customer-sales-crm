@@ -39,6 +39,7 @@
         dialog.remove();notice('บันทึกข้อมูลลูกค้าแล้ว');
         try{await onSaved();}catch{notice('บันทึกข้อมูลลูกค้าแล้ว แต่โหลดรายการใหม่ไม่สำเร็จ กรุณารีเฟรช ไม่ต้องบันทึกซ้ำ');}
       };
+      window.CustomerForm.enhance(dialog,{edit:true});
       document.body.append(dialog);dialog.showModal();dialog.querySelector('input').focus();
     }catch(e){notice(e.message);}finally{opening=false;}
   };
