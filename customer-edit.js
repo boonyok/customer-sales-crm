@@ -7,7 +7,8 @@
     if(tax&&!/^\d{13}$/.test(tax))throw Error('เลขผู้เสียภาษีต้องมี 13 หลัก หรือเว้นว่าง');
     if(String(data.creditDays??'').trim()===''||!Number.isSafeInteger(days)||days<0||days>3650)throw Error('กรุณาระบุเครดิต 0–3650 วัน (0 = เงินสด)');
     const text=key=>String(data[key]??'').trim()||null;
-    return {office_code:window.OfficeBranch.read(data),office_name:window.OfficeBranch.readName(data),name,contact_name:text('contact'),tax_id:tax||null,phone:text('phone'),billing_address:text('address'),credit_term_days:days};
+    const discount={};if(data.defaultDiscount!==undefined){const value=String(data.defaultDiscount).trim(),rate=Number(value);if(!value||!Number.isFinite(rate)||rate<0||rate>100||Math.abs(rate*100-Math.round(rate*100))>1e-8)throw Error('ส่วนลดต้องเป็น 0–100% และไม่เกิน 2 ตำแหน่งทศนิยม');discount.default_discount_rate=rate;}
+    return {...discount,office_code:window.OfficeBranch.read(data),office_name:window.OfficeBranch.readName(data),name,contact_name:text('contact'),tax_id:tax||null,phone:text('phone'),billing_address:text('address'),credit_term_days:days};
   };
   const update=async(request,org,customer,data)=>{
     if(!org||!customer?.id||customer.organization_id!==org||!customer.updated_at)throw Error('ข้อมูลลูกค้าไม่ครบ กรุณาเปิดรายการใหม่');
@@ -39,7 +40,7 @@
         dialog.remove();notice('บันทึกข้อมูลลูกค้าแล้ว');
         try{await onSaved();}catch{notice('บันทึกข้อมูลลูกค้าแล้ว แต่โหลดรายการใหม่ไม่สำเร็จ กรุณารีเฟรช ไม่ต้องบันทึกซ้ำ');}
       };
-      window.CustomerForm.enhance(dialog,{edit:true});
+      window.CustomerForm.enhance(dialog,{edit:true,discount:customer.default_discount_rate??0});
       document.body.append(dialog);dialog.showModal();dialog.querySelector('input').focus();
     }catch(e){notice(e.message);}finally{opening=false;}
   };

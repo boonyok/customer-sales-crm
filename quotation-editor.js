@@ -50,6 +50,8 @@
     root.querySelector('h2').after(numberingNotice);
     window.DocumentNumber.mount(root);
     const container=root.querySelector('.qe-items');
+    const defaultRate=()=>{const value=Number(customers.find(c=>c.id===root.querySelector('[name=customerId]').value)?.defaultDiscount??0);return Number.isFinite(value)&&value>=0&&value<=100?value:0;};
+    const discountNotice=document.createElement('p');discountNotice.setAttribute('role','status');container.before(discountNotice);
     const read=()=>[...container.children].map(row=>({variantId:row.querySelector('[data-variant]').value,specification:row.querySelector('[data-spec]').value,quantity:row.querySelector('[data-qty]').value,unitPrice:row.querySelector('[data-price]').value,discountRate:row.querySelector('[data-discount]').value}));
     const update=()=>{
       [...container.children].forEach((row,i)=>row.querySelector('strong').textContent=`รายการที่ ${i+1}`);
@@ -60,13 +62,14 @@
       const row=document.createElement('div');row.className='qe-row';
       row.innerHTML=`<div class="qe-top"><strong></strong><button type="button" class="ghost" data-remove>นำรายการนี้ออก</button></div><div data-sku-picker></div><input type="hidden" data-variant><label class="field"><span>รายละเอียด / ขนาดที่แสดงในเอกสาร</span><textarea data-spec rows="2"></textarea></label><div class="qe-numbers"><label class="field"><span>จำนวน</span><input data-qty type="number" min="1" step="1" value="1" required></label><label class="field"><span>ราคาต่อหน่วย (บาท)</span><input data-price type="number" min="0" step="0.01" value="0" required></label><label class="field"><span>ส่วนลด (%)</span><input data-discount type="number" min="0" max="100" step="0.01" value="0" required></label></div>`;
       window.ProductCodePicker.mount(row.querySelector('[data-sku-picker]'),products,p=>{if(productLookup&&p){const i=products.findIndex(item=>item.id===p.id);if(i<0)products.push(p);else products[i]=p;}row.querySelector('[data-variant]').value=p?.id??'';row.querySelector('[data-price]').value=p?.price??0;row.querySelector('[data-spec]').value=p?.size??'';update();},{lookup:productLookup});
+      const discount=row.querySelector('[data-discount]');discount.value=String(defaultRate());discount.addEventListener('input',()=>{discount.dataset.manual='1';});
       row.querySelector('[data-remove]').onclick=()=>{row.remove();update();};
       row.addEventListener('input',update);container.append(row);update();
     };
     root.querySelector('[data-qe-add]').onclick=add;
     const customerSelect=root.querySelector('[name=customerId]');
-    customerSelect.onchange=()=>{if(!cash)root.querySelector('[name=paymentTerms]').value=customers.find(c=>c.id===customerSelect.value)?.terms||'';};
-    if(!cash)customerSelect.onchange(); else root.querySelector('[name=issueDate]').value=issueDate();add();
+    customerSelect.onchange=()=>{if(!cash)root.querySelector('[name=paymentTerms]').value=customers.find(c=>c.id===customerSelect.value)?.terms||'';const rate=defaultRate();container.querySelectorAll('[data-discount]').forEach(input=>{if(!input.dataset.manual)input.value=String(rate);});discountNotice.textContent=`ส่วนลดประจำลูกค้า ${rate}% • เติมให้อัตโนมัติในรายการใหม่ • แก้ไขรายรายการได้ (รายการที่แก้เองจะไม่ถูกทับเมื่อเปลี่ยนลูกค้า)`;update();};
+    customerSelect.onchange();if(cash)root.querySelector('[name=issueDate]').value=issueDate();add();
     return {read};
   };
   window.QuotationEditor={encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample};

@@ -62,7 +62,7 @@
     if(orgId!==customerOrg)return;
     customersReadyOrg=customerOrg;
     window.DeliveryNotes?.configureEditor(customerOrg,rows,query=>lookupProductCodes(query,customerOrg));
-    state.customers = rows.map((customer) => ({ id: customer.id, name: customer.name, address: customer.billing_address || customer.address || '', contact: customer.contact_name || '-', taxId: customer.tax_id || '-', officeCode:customer.office_code,officeName:customer.office_name, phone: customer.phone || '-', terms: customer.credit_term_days ? `เครดิต ${customer.credit_term_days} วัน` : 'เงินสด', sales: '฿ 0' }));
+    state.customers = rows.map((customer) => ({ id: customer.id, name: customer.name, defaultDiscount:Number(customer.default_discount_rate??0), address: customer.billing_address || customer.address || '', contact: customer.contact_name || '-', taxId: customer.tax_id || '-', officeCode:customer.office_code,officeName:customer.office_name, phone: customer.phone || '-', terms: customer.credit_term_days ? `เครดิต ${customer.credit_term_days} วัน` : 'เงินสด', sales: '฿ 0' }));
   };
   // Document editors share only customer metadata and an on-demand SKU lookup.
   const documentEditorCatalog=async()=>{

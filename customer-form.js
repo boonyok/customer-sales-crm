@@ -1,6 +1,6 @@
 // Presentation-only enhancement shared by customer create/edit dialogs.
 (() => {
- const enhance=(dialog,{edit=false}={})=>{
+ const enhance=(dialog,{edit=false,discount=0}={})=>{
   dialog.classList.add('customer-friendly');
   const form=dialog.querySelector('form'),root=dialog.querySelector('.form-content')||form;
   if(root.querySelector('.customer-grid'))return;
@@ -40,6 +40,8 @@
   field('address','ที่อยู่สำหรับออกเอกสาร',{wide:true,placeholder:'บ้านเลขที่ / หมู่ / ถนน / ตำบล / อำเภอ / จังหวัด / รหัสไปรษณีย์'});
   section('2. ข้อมูลติดต่อ');field('contact','ชื่อผู้ติดต่อ',{placeholder:'ชื่อ–นามสกุล'});const phone=field('phone','เบอร์โทรศัพท์',{placeholder:'เช่น 081-234-5678'});phone.type='tel';
   section('3. เงื่อนไขการชำระเงิน');
+  const discountBox=document.createElement('label');discountBox.className='field';discountBox.innerHTML='<span>ส่วนลดประจำลูกค้า (%)</span><input name="defaultDiscount" type="number" min="0" max="100" step="0.01" required>';discountBox.querySelector('input').value=String(discount);root.insertBefore(discountBox,actions);
+  field('defaultDiscount','ส่วนลดประจำลูกค้า (%)',{wide:true,hint:'เติมส่วนลดให้รายการสินค้าในเอกสารใหม่อัตโนมัติ • ยังแก้ไขในเอกสารได้ • ไม่เปลี่ยนเอกสารเดิม'});
   const credit=field(edit?'creditDays':'terms','เครดิต (วัน) *',{wide:true,hint:'0 วัน = เงินสด • เลือกจำนวนวันหรือพิมพ์เองได้'});credit.value=String(parseInt(credit.value,10)||0);credit.type='number';credit.min=0;credit.max=3650;credit.step=1;credit.required=true;
   const choices=document.createElement('div');choices.className='credit-options';for(const days of [0,7,15,30,45,60]){const b=document.createElement('button');b.type='button';b.textContent=days?days+' วัน':'เงินสด';b.onclick=()=>{credit.value=String(days);credit.dispatchEvent(new Event('input',{bubbles:true}));};choices.append(b);}credit.after(choices);
   let error=root.querySelector('[data-error]');if(!error){error=document.createElement('p');error.dataset.error='';error.setAttribute('role','alert');actions.before(error);}
