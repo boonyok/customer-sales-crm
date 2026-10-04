@@ -526,7 +526,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     } catch (error) { if (modal.dataset.type === 'login') document.querySelector('#loginError').textContent = error.message; else alert(error.message); }
   }, true);
   const escapePrint = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-  const previewDocument = async (number) => {
+  const previewDocument = async (number,signatures=null) => {
     let doc = (await request(`/rest/v1/documents?organization_id=eq.${orgId}&document_number=eq.${encodeURIComponent(number)}&select=*&limit=1`))[0];
     if (!doc) throw new Error('ไม่พบเอกสาร กรุณาเข้าสู่ระบบแล้วลองใหม่');
     const [companies, items] = await Promise.all([
@@ -537,11 +537,12 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     ]);
     const company = companies[0] || {};
     doc = await window.OfficeBranch.resolve(request,orgId,doc,company);
+    doc._signatures=signatures||window.DocumentSignatures.load(orgId,doc);
     const e = escapePrint;
     const money = (value) => Number(value || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const date = (value) => value ? new Date(`${value}T00:00:00`).toLocaleDateString('th-TH') : '-';
     const title = { quotation: 'ใบเสนอราคา', billing_note: 'ใบวางบิล', tax_invoice: 'ใบกำกับภาษี / ใบเสร็จรับเงิน', cash_bill: 'บิลเงินสด' }[doc.kind] || 'เอกสาร';
-    document.querySelector('#document-preview')?.remove();
+    const previousPreview=document.querySelector('#document-preview');
     const preview = document.createElement('section');
     preview.id = 'document-preview';
     preview.setAttribute('role', 'dialog');
@@ -576,7 +577,9 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
       preview.insertAdjacentHTML('beforeend', documentLayout.styles + documentLayout.toSVG(layout));
     }
     if(!documentLayout){try{await preview.querySelector('.print-company-logo').decode();}catch{throw new Error('โหลดโลโก้บริษัทไม่ได้ กรุณาเปิดเอกสารใหม่');}}
+    if(previousPreview){previousPreview.dispatchEvent(new Event('pdf-close'));previousPreview.remove();}
     document.body.append(preview);
+    window.DocumentSignatures.mount(preview.querySelector('.print-tools'),{org:orgId,doc,onApply:values=>previewDocument(number,values)});
     if (doc.kind === 'tax_invoice' && window.ContinuousForm) {
       const formButton = document.createElement('button'); formButton.type = 'button';
       formButton.textContent = 'พิมพ์ลงฟอร์มต่อเนื่อง (Letter)';

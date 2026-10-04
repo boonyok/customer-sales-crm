@@ -48,7 +48,7 @@
     if(cashBilling)details.paymentTerms='เงินสด';
     const billDue=billing?billingDueDate(doc.issue_date,details.paymentTerms):null;
     const invoiceDates=[...new Set(items.map(item=>item.issue_date).filter(Boolean))];
-    const cashDue=items.length&&items.every(item=>item.issue_date)&&invoiceDates.length===1?date(invoiceDates[0]):items.length?'ตามวันที่ใบกำกับภาษีแต่ละใบ':'-';
+    const billingCashDue=items.length&&items.every(item=>item.issue_date)&&invoiceDates.length===1?date(invoiceDates[0]):items.length?'ตามวันที่ใบกำกับภาษีแต่ละใบ':'-';
     const pages=[];let page,y,tableTop;
     const text=(s,x,y,size=19,bold=false,align='left',color=INK)=>page.push({type:'text',s:String(s??''),x,y,size,bold,align,color});
     const rect=(x,y,w,h,fill='#ffffff',stroke=LINE)=>page.push({type:'rect',x,y,w,h,fill,stroke});
@@ -77,7 +77,7 @@
         leftY+=block('เลขประจำตัวผู้เสียภาษี '+(doc.customer_tax_id_snapshot||'-'),L,leftY,630,15,false,MUTED);
         text('รายละเอียดการวางบิล',805,customerY,14,true,'left',MUTED);
         let rightY=customerY+30;
-        for(const [label,value] of [['เอกสารจำนวน',items.length+' ฉบับ'],['เงื่อนไขชำระเงิน',details.paymentTerms||'-'],['กำหนดชำระ',cashBilling?cashDue:billDue?date(billDue):'ยังไม่ระบุเครดิต / วันที่บิล']]){
+        for(const [label,value] of [['เอกสารจำนวน',items.length+' ฉบับ'],['เงื่อนไขชำระเงิน',details.paymentTerms||'-'],['กำหนดชำระ',cashBilling?billingCashDue:billDue?date(billDue):'ยังไม่ระบุเครดิต / วันที่บิล']]){
           const labelLines=wrap(label,102,15,false,measure);
           labelLines.forEach((s,i)=>text(s,805,rightY+i*26,15,false,'left',MUTED));
           const lines=wrap(value,242,17,false,measure);
@@ -237,6 +237,13 @@
       y=sectionY+amountHeight+28;
     }
     (billing?[['ผู้วางบิล','PREPARED BY'],['ผู้รับวางบิล','RECEIVED BY'],['ผู้อนุมัติ','AUTHORIZED BY']]:cash?[['ผู้รับเงิน','RECEIVED BY'],['ผู้จัดทำ','PREPARED BY'],['ลูกค้า / ผู้ชำระเงิน','CUSTOMER']]:taxInvoice?[['ผู้จัดทำ','PREPARED BY'],['ผู้อนุมัติ','AUTHORIZED BY'],['ผู้รับเอกสาร','RECEIVED BY']]:[['ผู้เสนอราคา','PREPARED BY'],['ผู้อนุมัติ','AUTHORIZED BY'],['ลูกค้ายืนยันการสั่งซื้อ','ACCEPTED BY']]).forEach(([th,en],i)=>{const x=L+i*366;if(!billing)rect(x,y,342,161);line(x+20,y+76,x+322,y+76);text(th,x+171,y+89,18,true,'center');text(en,x+171,y+116,12,false,'center',MUTED);text('วันที่ ........ / ........ / ........',x+171,y+139,14,false,'center',MUTED);});
+    if(window.DocumentSignatures&&doc._signatures){
+      const selections=window.DocumentSignatures.normalize(doc._signatures);
+      page.filter(c=>c.type==='text'&&c.s==='วันที่ ........ / ........ / ........').forEach((command,i)=>{
+        const selected=selections[i];command.s='วันที่ '+window.DocumentSignatures.dateLabel(selected.date);
+        if(selected.name){const lines=wrap(selected.name,302,16,false,measure);if(lines.length>3)throw Error('ชื่อผู้ลงนามยาวเกินช่อง กรุณาย่อชื่อ');lines.forEach((value,j)=>text(value,command.x,command.y-124+j*21,16,false,'center'));}
+      });
+    }
     pages.forEach((p,i)=>{page=p;line(L,1670,R,1670);text(title+' / '+english,L,1690,13,false,'left',MUTED);text((doc.document_number||'ตัวอย่าง')+'  |  หน้า '+(i+1)+' / '+pages.length,R,1690,13,false,'right',MUTED);});
     return pages;
   };
