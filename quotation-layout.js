@@ -241,7 +241,9 @@
       const selections=window.DocumentSignatures.normalize(doc._signatures);
       page.filter(c=>c.type==='text'&&c.s==='วันที่ ........ / ........ / ........').forEach((command,i)=>{
         const selected=selections[i];command.s='วันที่ '+window.DocumentSignatures.dateLabel(selected.date);
-        if(selected.name){const lines=wrap(selected.name,302,16,false,measure);if(lines.length>3)throw Error('ชื่อผู้ลงนามยาวเกินช่อง กรุณาย่อชื่อ');lines.forEach((value,j)=>text(value,command.x,command.y-124+j*21,16,false,'center'));}
+        const signature=doc._signatureAssets?.[i];
+        if(signature){const scale=Math.min(270/signature.width,43/signature.height),w=signature.width*scale,h=signature.height*scale;page.push({type:'image',image:signature.image,href:signature.href,x:command.x-w/2,y:command.y-133+(43-h)/2,w,h});}
+        if(selected.name){const lines=wrap(selected.name,302,signature?13:16,false,measure);if(lines.length>(signature?1:3))throw Error('ชื่อผู้ลงนามยาวเกินช่อง กรุณาย่อชื่อ');lines.forEach((value,j)=>text(value,command.x,command.y-(signature?83:124)+j*21,signature?13:16,false,'center'));}
       });
     }
     pages.forEach((p,i)=>{page=p;line(L,1670,R,1670);text(title+' / '+english,L,1690,13,false,'left',MUTED);text((doc.document_number||'ตัวอย่าง')+'  |  หน้า '+(i+1)+' / '+pages.length,R,1690,13,false,'right',MUTED);});
@@ -251,8 +253,9 @@
   const draw=(pages,createCanvas)=>pages.map(commands=>{const canvas=createCanvas();canvas.width=W;canvas.height=H;const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);commands.forEach(c=>{if(c.type==='image'){ctx.drawImage(c.image,c.x,c.y,c.w,c.h);}else if(c.type==='text'){ctx.font=`${c.bold?'bold ':''}${c.size}px Tahoma,Arial,sans-serif`;ctx.textBaseline='alphabetic';ctx.textAlign=c.align;ctx.fillStyle=c.color;ctx.fillText(c.s,c.x,c.y+c.size*.85);}else if(c.type==='rect'){ctx.fillStyle=c.fill;ctx.fillRect(c.x,c.y,c.w,c.h);ctx.strokeStyle=c.stroke;ctx.lineWidth=1;ctx.strokeRect(c.x,c.y,c.w,c.h);}else{ctx.strokeStyle=c.color;ctx.lineWidth=c.width;ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(c.x2,c.y2);ctx.stroke();}});return canvas;});
   const prepare=async(company,doc,items)=>{await document.fonts.ready;const image=new Image();image.src=new URL('company-logo.png',document.baseURI).href;try{await image.decode();}catch{throw Error('โหลดโลโก้บริษัทไม่ได้ กรุณาโหลดหน้าเว็บใหม่ก่อนพิมพ์');}const asset=document.createElement('canvas');asset.width=image.naturalWidth;asset.height=image.naturalHeight;asset.getContext('2d').drawImage(image,0,0);const logo={image,href:asset.toDataURL('image/png'),width:image.naturalWidth,height:image.naturalHeight};const ctx=document.createElement('canvas').getContext('2d');return build(company,doc,items,(s,size,bold)=>{ctx.font=`${bold?'bold ':''}${size}px Tahoma,Arial,sans-serif`;return ctx.measureText(s).width;},logo);};
   const styles=`<style>#document-preview .qt-sheet{display:block;width:210mm;height:297mm;max-width:none;margin:24px auto;background:white;box-shadow:0 10px 45px #17203318}#document-preview .print-tools{flex-wrap:wrap}@media print{@page{size:A4;margin:0}#document-preview .qt-sheet{width:210mm;height:297mm;margin:0;box-shadow:none;break-after:page;page-break-after:always;print-color-adjust:exact}#document-preview .qt-sheet:last-child{break-after:auto;page-break-after:auto}}</style>`;
-  window.QuotationLayout={build,toSVG,draw,prepare,styles};
-  window.BillingLayout={billingDueDate,build,draw,prepare,styles,toSVG:pages=>toSVG(pages,'ใบวางบิล')};
-  window.CashBillLayout={build,draw,prepare,styles,toSVG:pages=>toSVG(pages,'บิลเงินสด')};
-  window.TaxInvoiceLayout={build,draw,prepare,styles,toSVG:pages=>toSVG(pages,'ใบกำกับภาษี')};
+  const prepareSignatures=async(company,doc,items)=>prepare(company,{...doc,_signatureAssets:window.DocumentSignatures?await window.DocumentSignatures.assets(doc._signatures):[]},items);
+  window.QuotationLayout={build,toSVG,draw,prepare:prepareSignatures,styles};
+  window.BillingLayout={billingDueDate,build,draw,prepare:prepareSignatures,styles,toSVG:pages=>toSVG(pages,'ใบวางบิล')};
+  window.CashBillLayout={build,draw,prepare:prepareSignatures,styles,toSVG:pages=>toSVG(pages,'บิลเงินสด')};
+  window.TaxInvoiceLayout={build,draw,prepare:prepareSignatures,styles,toSVG:pages=>toSVG(pages,'ใบกำกับภาษี')};
 })();

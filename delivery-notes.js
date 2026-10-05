@@ -41,6 +41,7 @@
     const panel = document.createElement('section'); panel.id = 'dn-preview';
     panel.innerHTML = `<div class="dn-actions"><button class="ghost" data-close>กลับ</button><button class="primary" data-print>พิมพ์ / บันทึก PDF</button><span>${doc.id ? 'เอกสารที่บันทึกแล้ว' : 'ตัวอย่าง — ยังไม่ได้บันทึก'}</span></div>` + buildSheet(company, doc, items);
     panel.querySelectorAll('.dn-sign > div').forEach((box,i)=>{const value=doc._signatures[i],name=document.createElement('span');name.textContent=value.name;name.style.cssText='display:block;text-align:center;white-space:normal;overflow-wrap:anywhere;font-size:12px';box.querySelector('.dn-sign-line').append(name);box.querySelector('.dn-sign-date').textContent='วันที่ '+window.DocumentSignatures.dateLabel(value.date);});
+    panel.querySelectorAll('.dn-sign > div').forEach((box,i)=>{const value=doc._signatures[i];if(value.image){const image=document.createElement('img');image.src=value.image;image.alt='ลายเซ็น';image.style.cssText='display:block;width:100%;height:8mm;object-fit:contain';box.querySelector('.dn-sign-line').style.height='15mm';box.querySelector('.dn-sign-line').prepend(image);}});
     window.DocumentSignatures.mount(panel.querySelector('.dn-actions'),{org:organizationId,doc,onApply:values=>preview({...doc,_signatures:values},items)});
     panel.querySelector('[data-close]').onclick = () => panel.remove();
     const printButton=panel.querySelector('[data-print]');
