@@ -10,6 +10,7 @@
     #delivery-form .dn-line {display:grid;grid-template-columns:1fr 110px 60px;gap:10px;align-items:end;margin:10px 0}
     #delivery-form select,#delivery-form input,#delivery-form textarea {width:100%;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:7px;font:inherit}
     #delivery-form textarea {min-height:75px} #delivery-form .field {display:block;margin:14px 0}
+    #delivery-form .dn-detail{grid-column:1/-1} #delivery-form .dn-line{border:1px solid #dbe3ea;border-radius:10px;padding:14px;margin:16px 0;background:#f8fafc}
     #delivery-form .field span {display:block;margin-bottom:6px} .dn-error {color:#b42318;white-space:pre-wrap}
     #dn-preview {position:fixed;inset:0;background:#e7ebef;z-index:10000;overflow:auto;padding:24px}
     .dn-actions {max-width:210mm;margin:0 auto 18px;display:flex;gap:12px;align-items:center}.dn-actions span{font-size:12px;color:#536174}
@@ -61,14 +62,14 @@
     const form=dialog.querySelector('form'); let pendingId=crypto.randomUUID(), saving=false;
     const today=new Date(); form.elements.date.value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
     const updateLines=()=>{const lines=[...dialog.querySelectorAll('.dn-line')];dialog.querySelector('[data-line-count]').textContent=`(${lines.length} รายการ)`;lines.forEach((line,i)=>{line.querySelector('[data-line-title]').textContent=`รายการที่ ${i+1} — สินค้า / ขนาด`;});};
-    const addLine=()=>{const line=document.createElement('div');line.className='dn-line';line.innerHTML=`<div><span data-line-title>สินค้า / ขนาด</span><div data-sku-picker></div><input type="hidden" data-variant></div><label>จำนวน<input data-dn-qty aria-label="จำนวน" type="number" min="1" max="99999999999" step="1" value="1" required></label><button type="button" class="ghost" aria-label="ลบรายการ">ลบ</button>`;line.querySelector('button').onclick=()=>{line.remove();updateLines();};window.ProductCodePicker.mount(line.querySelector('[data-sku-picker]'),variants,v=>{if(v){const item={...v,label:v.size,unit:v.unit||'ชิ้น'},i=variants.findIndex(p=>p.id===v.id);if(i<0)variants.push(item);else variants[i]=item;}line.querySelector('[data-variant]').value=v?.id??'';},{lookup:lookupProducts});dialog.querySelector('[data-lines]').append(line);updateLines();};
+    const addLine=()=>{const line=document.createElement('div');line.className='dn-line';line.innerHTML=`<div><span data-line-title>สินค้า / ขนาด</span><div data-sku-picker></div><input type="hidden" data-variant></div><label>จำนวน<input data-dn-qty aria-label="จำนวน" type="number" min="1" max="99999999999" step="1" value="1" required></label><button type="button" class="ghost" aria-label="ลบรายการ">ลบ</button><label class="dn-detail">รายละเอียด / ขนาดที่แสดงในเอกสาร<textarea data-dn-spec maxlength="1500" placeholder='เช่น 48" x 24" หรือรายละเอียดเพิ่มเติม'></textarea></label>`;line.querySelector('button').onclick=()=>{line.remove();updateLines();};window.ProductCodePicker.mount(line.querySelector('[data-sku-picker]'),variants,v=>{if(v){const item={...v,label:v.size,unit:v.unit||'ชิ้น'},i=variants.findIndex(p=>p.id===v.id);if(i<0)variants.push(item);else variants[i]=item;line.querySelector('[data-dn-spec]').value=v.size??v.label??'';}line.querySelector('[data-variant]').value=v?.id??'';},{lookup:lookupProducts});dialog.querySelector('[data-lines]').append(line);updateLines();};
     dialog.querySelector('[data-add]').onclick=addLine;addLine();
     dialog.querySelector('[data-copy]').onclick=()=>{form.elements.shipping.value=customers.find(c=>c.id===form.elements.customer.value)?.billing_address || '';};
     const collect=()=>{
       if(actionOrg!==organizationId)throw Error('องค์กรเปลี่ยน กรุณาเปิดเอกสารใหม่');
       if(!form.reportValidity()) return null;
       const c=customers.find(c=>c.id===form.elements.customer.value);
-      const lines=[...dialog.querySelectorAll('.dn-line')].map(line=>{const v=variants.find(v=>v.id===line.querySelector('[data-variant]').value);return {variant_id:v.id,sku:v.sku,name:v.name,specification:v.label,unit:v.unit,quantity:Number(line.querySelector('[data-dn-qty]').value)};});
+      const lines=[...dialog.querySelectorAll('.dn-line')].map(line=>{const v=variants.find(v=>v.id===line.querySelector('[data-variant]').value);if(!v)throw Error('กรุณาเลือกรหัสสินค้าให้ครบทุกแถว');return {variant_id:v.id,sku:v.sku,name:v.name,specification:line.querySelector('[data-dn-spec]').value.trim(),unit:v.unit,quantity:Number(line.querySelector('[data-dn-qty]').value)};});
       if(lines.some(i=>!Number.isSafeInteger(i.quantity)||i.quantity<1))throw Error('จำนวนสินค้าต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป');
       if(!lines.length) throw new Error('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ');
       if(!form.elements.shipping.value.trim()) throw new Error('กรุณาระบุสถานที่จัดส่ง');
@@ -77,7 +78,7 @@
     dialog.querySelector('[data-preview]').onclick=()=>{try{const data=collect();if(data){dialog.close();preview(data.doc,data.items);document.querySelector('#dn-preview [data-close]').onclick=()=>{document.querySelector('#dn-preview').remove();dialog.showModal();};}}catch(e){dialog.querySelector('.dn-error').textContent=e.message;}};
     dialog.querySelector('[data-cancel]').onclick=()=>{dialog.remove();};dialog.addEventListener('cancel',()=>dialog.remove());
     form.onsubmit=async event=>{event.preventDefault();if(saving)return;try{const data=collect();if(!data)return;saving=true;form.querySelector('button[type=submit]').disabled=true;dialog.querySelector('.dn-error').textContent='กำลังบันทึก…';
-      const id=await window.DocumentNumber.call(actionApi,'save_delivery_note',{p_id:pendingId,p_org:actionOrg,p_customer:data.doc.customer_id,p_date:data.doc.issue_date,p_shipping:data.doc.shipping_address,p_notes:data.doc.notes,p_items:data.items.map(i=>({variant_id:i.variant_id,quantity:i.quantity}))},window.DocumentNumber.read(form));
+      const id=await window.DocumentNumber.call(actionApi,'save_delivery_note',{p_id:pendingId,p_org:actionOrg,p_customer:data.doc.customer_id,p_date:data.doc.issue_date,p_shipping:data.doc.shipping_address,p_notes:data.doc.notes,p_items:data.items.map(i=>({variant_id:i.variant_id,quantity:i.quantity,specification:i.specification}))},window.DocumentNumber.read(form));
       dialog.remove();await load(api,organizationId);await showSaved(id);
     }catch(e){dialog.querySelector('.dn-error').textContent=`บันทึกไม่สำเร็จ: ${e.message}`;}finally{saving=false;const btn=form.querySelector('button[type=submit]');if(btn)btn.disabled=false;}};
     window.DocumentNumber.mount(form);
