@@ -401,7 +401,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>à
       // Compatibility placeholder only: the database assigns the annual number on insert.
       // Keeping the UUID stable lets retries reuse the original document and number.
       const number = `QT-${today.replaceAll('-', '')}-${id.slice(0,8).toUpperCase()}`;
-      pendingQuotation={inputKey,id,document:{id,organization_id:orgId,kind:'quotation',document_number:number,status:'draft',customer_id:customer.id,customer_name_snapshot:customer.name,customer_tax_id_snapshot:customer.taxId==='-'?null:customer.taxId,customer_address_snapshot:customer.address||null,issue_date:today,valid_until:data.expires,...totals,notes:window.QuotationEditor.encode({paymentTerms:data.paymentTerms.trim(),deliveryTerms:data.deliveryTerms.trim(),notes:data.notes,rates:rows.map(r=>Number(r.discountRate))}),created_by:session.user.id},items};
+      pendingQuotation={inputKey,id,document:{id,organization_id:orgId,kind:'quotation',document_number:number,status:'draft',customer_id:customer.id,customer_name_snapshot:customer.name,customer_tax_id_snapshot:customer.taxId==='-'?null:customer.taxId,customer_address_snapshot:customer.address||null,issue_date:today,valid_until:data.expires,...totals,notes:window.QuotationEditor.encode({paymentTerms:window.QuotationEditor.paymentWithDueDate(data.paymentTerms.trim(),today),deliveryTerms:data.deliveryTerms.trim(),notes:data.notes,rates:rows.map(r=>Number(r.discountRate))}),created_by:session.user.id},items};
     }
     // The atomic RPC can be retried after a lost response without duplicate rows.
     const submittedQuotation=pendingQuotation;

@@ -7,6 +7,7 @@
   const money = n => Number(n).toLocaleString('th-TH', {minimumFractionDigits:2,maximumFractionDigits:2});
   const issueDate = (now = new Date()) => new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
   const addMonths = (value, months) => { const [y,m,d]=String(value).split('-').map(Number); const date=new Date(Date.UTC(y,m-1,d)); const targetMonth=date.getUTCMonth()+months; date.setUTCDate(1); date.setUTCMonth(targetMonth); const last=new Date(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()+1,0)).getUTCDate(); date.setUTCDate(Math.min(d,last)); return date.toISOString().slice(0,10); };
+  const paymentWithDueDate = (terms, value) => { const text=String(terms??'').trim(); const match=text.match(/(?:เครดิต\s*)?(\d+)\s*วัน/); if(!match||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value||'')) return text; const date=new Date(`${value}T00:00:00Z`); date.setUTCDate(date.getUTCDate()+Number(match[1])); return `${text} (ครบกำหนด ${date.toISOString().slice(0,10)})`; };
   const numberExample = date => `QT${String(Number(date.slice(0,4))+543).slice(-2)}-00001`;
   const encode = ({paymentTerms='',deliveryTerms='',notes='',rates=[]}) => prefix + JSON.stringify({paymentTerms,deliveryTerms,notes,rates});
   const decode = value => {
@@ -73,5 +74,5 @@
     customerSelect.onchange();if(cash)root.querySelector('[name=issueDate]').value=issueDate();else{const date=root.querySelector('[name=expires]'),months=root.querySelector('[name=validityMonths]');date.value=addMonths(issueDate(),1);months.onchange=()=>{date.value=addMonths(issueDate(),Number(months.value));};}add();
     return {read};
   };
-  window.QuotationEditor={encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths};
+  window.QuotationEditor={encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths,paymentWithDueDate};
 })();
