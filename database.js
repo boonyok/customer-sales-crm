@@ -385,19 +385,34 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     await syncProducts(); render();
   };
   const importVDFlangeCatalog = async () => {
-    if (localStorage.getItem('vd-flange-catalog-imported-v1')===orgId) return;
+    if (localStorage.getItem('vd-flange-catalog-imported-v2')===orgId) return;
     await new Promise(resolve=>setTimeout(resolve,1200));
     const catalog=window.VDFlangeCatalog;
     if(!orgId||!Array.isArray(catalog)||!catalog.length)return;
     const existing=await request('/rest/v1/products?organization_id=eq.'+encodeURIComponent(orgId)+'&select=id,code');
     const codes=new Set((existing||[]).map(x=>String(x.code||'').toUpperCase()));
-    const pending=catalog.filter(x=>!codes.has(x.sku.toUpperCase()));
-    if(!pending.length){localStorage.setItem('vd-flange-catalog-imported-v1',orgId);return;}
+    const pending=catalog.map(x=>({sku:String(x.sku||x.code||'').trim(),name:x.name||'Volume Damper - Flange Handlever',size:x.size||'',price:x.price})).filter(x=>x.sku&&!codes.has(x.sku.toUpperCase()));
+    if(!pending.length){localStorage.setItem('vd-flange-catalog-imported-v2',orgId);return;}
     const products=await request('/rest/v1/products',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(pending.map(x=>({organization_id:orgId,code:x.sku,name:x.name,unit:'ชิ้น'})))});
     const byCode=new Map(products.map(x=>[String(x.code).toUpperCase(),x]));
     const variants=await request('/rest/v1/product_variants',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(pending.map(x=>({product_id:byCode.get(x.sku.toUpperCase()).id,sku:x.sku,label:x.size})))});
     await request('/rest/v1/variant_prices',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(variants.map((v,i)=>({variant_id:v.id,price:pending[i].price})))});
-    localStorage.setItem('vd-flange-catalog-imported-v1',orgId); await syncProducts(); render();
+    localStorage.setItem('vd-flange-catalog-imported-v2',orgId); await syncProducts(); render();
+  };
+  const importOBVCatalog = async () => {
+    if (localStorage.getItem('obv-catalog-imported-v1')===orgId) return;
+    await new Promise(resolve=>setTimeout(resolve,1200));
+    const catalog=window.OBVCatalog;
+    if(!orgId||!Array.isArray(catalog)||!catalog.length)return;
+    const existing=await request('/rest/v1/products?organization_id=eq.'+encodeURIComponent(orgId)+'&select=id,code');
+    const codes=new Set((existing||[]).map(x=>String(x.code||'').toUpperCase()));
+    const pending=catalog.map(x=>({sku:String(x.sku||x.code||'').trim(),name:'Opposed Blade Volume Damper',size:x.size||'',price:x.price})).filter(x=>x.sku&&!codes.has(x.sku.toUpperCase()));
+    if(!pending.length){localStorage.setItem('obv-catalog-imported-v1',orgId);return;}
+    const products=await request('/rest/v1/products',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(pending.map(x=>({organization_id:orgId,code:x.sku,name:x.name,unit:'ชิ้น'})))});
+    const byCode=new Map(products.map(x=>[String(x.code).toUpperCase(),x]));
+    const variants=await request('/rest/v1/product_variants',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(pending.map(x=>({product_id:byCode.get(x.sku.toUpperCase()).id,sku:x.sku,label:x.size})))});
+    await request('/rest/v1/variant_prices',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(variants.map((v,i)=>({variant_id:v.id,price:pending[i].price})))});
+    localStorage.setItem('obv-catalog-imported-v1',orgId); await syncProducts(); render();
   };
   const addQuotation = async (data) => {
     data.manualDocumentNumber=window.DocumentNumber.normalize(data.manualDocumentNumber);
@@ -716,7 +731,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     let starting=false;
     const start=async()=>{
       if(starting)return;starting=true;initialLoading=true;label();startupNotice.hidden=false;startupNotice.textContent='กำลังโหลดข้อมูลเอกสาร… สินค้าจะโหลดเมื่อเปิดใช้งาน';
-      try{await syncAll();await importVDFlangeCatalog();startupNotice.hidden=true;}
+      try{await syncAll();await importVDFlangeCatalog();await importOBVCatalog();startupNotice.hidden=true;}
       catch(error){
         if(error.status===401){session=null;localStorage.removeItem('flowbill-session');localStorage.removeItem('flowbill-org-id');login();}
         else{startupNotice.textContent='โหลดข้อมูลเอกสารไม่สำเร็จ: '+error.message+' ';const retry=document.createElement('button');retry.type='button';retry.className='ghost';retry.textContent='ลองใหม่';retry.onclick=start;startupNotice.append(retry);}
