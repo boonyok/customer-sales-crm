@@ -11,6 +11,15 @@
     button?.addEventListener('click', () => setTimeout(() => {
       const dialog = document.querySelector('#signer-dialog');
       if (dialog) dialog.querySelectorAll('.signer-row')[customerIndex]?.remove();
+      if (dialog) dialog.querySelectorAll('.signer-row').forEach(row => {
+        const imageSelect = row.querySelector('select');
+        const nameInput = row.querySelector('input[type="text"]');
+        if (!imageSelect || !nameInput) return;
+        imageSelect.addEventListener('change', () => {
+          const option = imageSelect.selectedOptions[0];
+          if (imageSelect.value && option && option.textContent && option.textContent !== 'ลายเซ็นที่เลือกในเอกสาร') nameInput.value = option.textContent;
+        });
+      });
     }, 0));
     return result;
   };
