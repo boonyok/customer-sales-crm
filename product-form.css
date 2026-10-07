@@ -2,9 +2,12 @@
 .product-form h2{font-size:22px;margin:0;color:#172033}
 .product-form-intro{color:#7d8797;font-size:13px;margin:5px 0 20px}
 .product-form .field{margin:0 0 16px}
+.product-form .field{display:block!important;width:100%!important}
 .product-form .field span{font-size:13px;color:#33415c;margin-bottom:7px}
+.product-form .field span{display:block!important;width:100%!important}
 .product-form .field span b{color:#d65a5a}
 .product-form .field input{min-height:44px;border:1px solid #cfd8e3;border-radius:9px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+.product-form .field input{display:block;width:100%!important}
 .product-form .field input:focus{border-color:#47a98e;box-shadow:0 0 0 3px #47a98e22;outline:0}
 .product-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .product-field-hint{display:block;color:#8a96a7;font-size:11px;margin-top:5px}
