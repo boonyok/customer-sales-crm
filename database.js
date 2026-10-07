@@ -356,6 +356,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     if(!root||root.querySelector('[data-product-form-enhanced]'))return;
     root.classList.add('product-form');
     root.setAttribute('data-product-form-enhanced','');
+    if(!root.querySelector('.field'))root.insertAdjacentHTML('beforeend','<label class="field"><span>รหัสสินค้า</span><input name="sku" required autocomplete="off" placeholder="เช่น BX-203015"><small class="product-field-hint">ใช้รหัสที่ไม่ซ้ำกับรายการเดิม</small></label><label class="field"><span>ชื่อสินค้า</span><input name="name" required placeholder="เช่น กล่องกระดาษลูกฟูก"></label><label class="field"><span>ขนาด / สเปก</span><input name="size" required placeholder="เช่น 20 × 30 × 15 ซม."></label><label class="field"><span>ราคาขายก่อน VAT</span><div class="product-price-wrap"><input name="price" required type="number" min="0" step="0.01" placeholder="0.00"><span>บาท</span></div></label>');
     const title=root.querySelector('h2');
     if(title){const intro=document.createElement('p');intro.className='product-form-intro';intro.textContent='กรอกข้อมูลสินค้าเพื่อให้ค้นหาและใช้งานในเอกสารได้ง่าย';title.after(intro);}
     root.querySelectorAll('.field span').forEach(span=>{if(!span.textContent.includes('*'))span.insertAdjacentHTML('beforeend',' <b>*</b>');});
