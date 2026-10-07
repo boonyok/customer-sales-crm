@@ -358,8 +358,6 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     root.setAttribute('data-product-form-enhanced','');
     const title=root.querySelector('h2');
     if(title){const intro=document.createElement('p');intro.className='product-form-intro';intro.textContent='กรอกข้อมูลสินค้าเพื่อให้ค้นหาและใช้งานในเอกสารได้ง่าย';title.after(intro);}
-    const fields=[...root.querySelectorAll('.field')];
-    if(fields.length){const grid=document.createElement('div');grid.className='product-form-grid';fields.forEach(field=>grid.append(field));const actions=root.querySelector('.form-actions');if(actions)root.insertBefore(grid,actions);else root.append(grid);}
     root.querySelectorAll('.field span').forEach(span=>{if(!span.textContent.includes('*'))span.insertAdjacentHTML('beforeend',' <b>*</b>');});
     const sku=root.querySelector('[name="sku"]');
     if(sku){const hint=document.createElement('small');hint.className='product-field-hint';hint.textContent='ใช้รหัสที่ไม่ซ้ำกับรายการเดิม';sku.after(hint);sku.setAttribute('autocomplete','off');}
