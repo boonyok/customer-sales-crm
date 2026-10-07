@@ -351,13 +351,30 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
   // restores an expired Supabase session after the page has been reopened.
   button.onclick = login;
   const baseOpenForm = window.openForm;
+  const enhanceProductForm = () => {
+    const root=document.querySelector('#modal-content'), form=root?.closest('form');
+    if(!root||root.querySelector('[data-product-form-enhanced]'))return;
+    root.classList.add('product-form');
+    root.setAttribute('data-product-form-enhanced','');
+    const title=root.querySelector('h2');
+    if(title){const intro=document.createElement('p');intro.className='product-form-intro';intro.textContent='กรอกข้อมูลสินค้าเพื่อให้ค้นหาและใช้งานในเอกสารได้ง่าย';title.after(intro);}
+    const fields=[...root.querySelectorAll('.field')];
+    if(fields.length){const grid=document.createElement('div');grid.className='product-form-grid';fields.forEach(field=>grid.append(field));const actions=root.querySelector('.form-actions');if(actions)root.insertBefore(grid,actions);else root.append(grid);}
+    root.querySelectorAll('.field span').forEach(span=>{if(!span.textContent.includes('*'))span.insertAdjacentHTML('beforeend',' <b>*</b>');});
+    const sku=root.querySelector('[name="sku"]');
+    if(sku){const hint=document.createElement('small');hint.className='product-field-hint';hint.textContent='ใช้รหัสที่ไม่ซ้ำกับรายการเดิม';sku.after(hint);sku.setAttribute('autocomplete','off');}
+    const price=root.querySelector('[name="price"]');
+    if(price){const wrap=document.createElement('div');wrap.className='product-price-wrap';price.parentNode.insertBefore(wrap,price);wrap.append(price);const unit=document.createElement('span');unit.textContent='บาท';wrap.append(unit);}
+    const actions=root.querySelector('.form-actions');
+    if(actions){const tip=document.createElement('p');tip.className='product-form-tip';tip.textContent='ตรวจสอบรหัสสินค้าและราคาให้ถูกต้องก่อนบันทึก';actions.before(tip);}
+  };
   let quotationEditor, pendingQuotation, savingQuotation = false;
   let editorProducts=[],editorCustomers=[],editorOrg=null,openingDocument=0;
   modal.addEventListener('cancel', event => { if (savingQuotation) event.preventDefault(); });
   window.openForm = async (type) => {
     const token=++openingDocument;
     modal.classList.remove('customer-friendly');modal.querySelector('[data-customer-style]')?.remove();
-    if(!['quotation','cash_bill'].includes(type)){const result=baseOpenForm(type);if(type==='customer'){window.OfficeBranch.mount(document.querySelector('#modal-content'),'00000',{before:document.querySelector('#modal-content .form-actions')});window.CustomerForm.enhance(modal);}return result;}
+    if(!['quotation','cash_bill'].includes(type)){const result=baseOpenForm(type);if(type==='customer'){window.OfficeBranch.mount(document.querySelector('#modal-content'),'00000',{before:document.querySelector('#modal-content .form-actions')});window.CustomerForm.enhance(modal);}if(type==='product')enhanceProductForm();return result;}
     if(!session)return login();
     const root=document.querySelector('#modal-content');
     if(!productsOrganizationReady||customersReadyOrg!==orgId){

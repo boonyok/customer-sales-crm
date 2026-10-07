@@ -1,0 +1,16 @@
+.product-form{padding:28px 30px 24px;background:linear-gradient(180deg,#fff 0%,#fbfdfc 100%)}
+.product-form h2{font-size:22px;margin:0;color:#172033}
+.product-form-intro{color:#7d8797;font-size:13px;margin:5px 0 20px}
+.product-form .field{margin:0 0 16px}
+.product-form .field span{font-size:13px;color:#33415c;margin-bottom:7px}
+.product-form .field span b{color:#d65a5a}
+.product-form .field input{min-height:44px;border:1px solid #cfd8e3;border-radius:9px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+.product-form .field input:focus{border-color:#47a98e;box-shadow:0 0 0 3px #47a98e22;outline:0}
+.product-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.product-field-hint{display:block;color:#8a96a7;font-size:11px;margin-top:5px}
+.product-price-wrap{display:flex;align-items:center;border:1px solid #cfd8e3;border-radius:9px;background:#fff;overflow:hidden}
+.product-price-wrap input{border:0!important;box-shadow:none!important;flex:1}
+.product-price-wrap span{padding:0 13px;color:#7d8797;font-size:12px}
+.product-form-tip{margin:2px 0 0;padding:10px 12px;border-radius:8px;background:#eef8f5;color:#277d68;font-size:12px}
+.product-form .form-actions{margin-top:20px;padding-top:18px;border-top:1px solid #e8eaf0}
+@media(max-width:620px){.product-form{padding:22px 20px}.product-form-grid{grid-template-columns:1fr}}
