@@ -379,8 +379,16 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     modal.dataset.type=type;if(!modal.open)modal.showModal();
   };
   const addProduct = async (data) => {
-    const products = await request('/rest/v1/products', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ organization_id: orgId, code: data.sku, name: data.name, unit: 'ชิ้น' }) });
-    const variants = await request('/rest/v1/product_variants', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ product_id: products[0].id, sku: data.sku, label: data.size }) });
+    const sku = String(data.sku || '').trim();
+    if (!sku) throw Error('กรุณาระบุรหัสสินค้า');
+    // Product codes are unique per company. Check first so users get a clear
+    // message instead of the raw database constraint error.
+    const duplicate = await request('/rest/v1/products?organization_id=eq.'+encodeURIComponent(orgId)+'&code=ilike.'+encodeURIComponent(sku)+'&select=id,code&limit=1');
+    if (Array.isArray(duplicate) && duplicate.length) {
+      throw Error(`รหัสสินค้า ${sku} มีอยู่แล้ว กรุณาใช้รหัสใหม่ หรือแก้ไขรายการเดิม`);
+    }
+    const products = await request('/rest/v1/products', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ organization_id: orgId, code: sku, name: data.name, unit: 'ชิ้น' }) });
+    const variants = await request('/rest/v1/product_variants', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ product_id: products[0].id, sku, label: data.size }) });
     await request('/rest/v1/variant_prices', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ variant_id: variants[0].id, price: Number(data.price) }) });
     await syncProducts(); render();
   };
