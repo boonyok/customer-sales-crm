@@ -5,7 +5,7 @@
   if (!signatures?.mount) return;
   const originalMount = signatures.mount;
   signatures.mount = (toolbar, options = {}) => {
-    if (options.doc?.kind === 'delivery_note') return;
+    if (['delivery_note','billing_note','cash_bill','tax_invoice','quotation'].includes(options.doc?.kind)) return;
     return originalMount(toolbar, options);
   };
 })();
