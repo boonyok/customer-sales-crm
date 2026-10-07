@@ -21,6 +21,9 @@
 .product-form .product-price-wrap span{width:auto!important;display:block!important;white-space:nowrap}
 #modal-content.product-form .field .product-price-wrap span{width:auto!important;display:block!important;white-space:nowrap}
 #modal-content.product-form .field .product-price-wrap input{width:auto!important;flex:1 1 auto!important;min-width:0}
+#modal-content.product-form .field .product-price-wrap input[type=number]::-webkit-outer-spin-button,
+#modal-content.product-form .field .product-price-wrap input[type=number]::-webkit-inner-spin-button{appearance:none;margin:0}
+#modal-content.product-form .field .product-price-wrap input[type=number]{-moz-appearance:textfield}
 .product-form-tip{margin:2px 0 0;padding:10px 12px;border-radius:8px;background:#eef8f5;color:#277d68;font-size:12px}
 .product-form .form-actions{margin-top:20px;padding-top:18px;border-top:1px solid #e8eaf0}
 @media(max-width:620px){.product-form{padding:22px 20px}.product-form-grid{grid-template-columns:1fr}}
