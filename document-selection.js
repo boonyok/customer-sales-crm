@@ -60,6 +60,15 @@
           if (actions.dataset.fingerprint === fingerprint) return;
           actions.dataset.fingerprint = fingerprint; actions.replaceChildren();
           source.forEach(original => {
+            if (['tax-invoice-control', 'tax-invoices'].includes(id) && original.dataset.printDocument) {
+              if (actions.querySelector('[data-tax-output]')) return;
+              for (const [mode, label] of [['a4', 'พิมพ์ A4'], ['continuous', 'พิมพ์กระดาษต่อเนื่อง'], ['pdf', 'บันทึก PDF']]) {
+                const output = document.createElement('button'); output.type = 'button'; output.className = 'ghost'; output.dataset.taxOutput = mode; output.textContent = label; output.disabled = original.disabled;
+                output.onclick = async () => { output.disabled = true; try { await window.TaxDocumentOutput(original.dataset.printDocument, mode); } catch (error) { alert(error.message); } finally { output.disabled = original.disabled; } };
+                actions.append(output);
+              }
+              return;
+            }
             const button = document.createElement('button'); button.type = 'button'; button.className = 'ghost'; button.textContent = original.textContent.trim(); button.disabled = original.disabled;
             button.onclick = () => { if (original.isConnected && !original.disabled) original.click(); };
             actions.append(button);

@@ -637,11 +637,13 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     if (doc.kind === 'tax_invoice' && window.ContinuousForm) {
       const formButton = document.createElement('button'); formButton.type = 'button';
       formButton.textContent = 'พิมพ์ลงฟอร์มต่อเนื่อง (Letter)';
+      formButton.dataset.printContinuous = '';
       formButton.onclick = async () => { try { await window.ContinuousForm.open(company, doc, items, orgId); } catch (error) { alert(error.message); } };
       preview.querySelector('.print-tools').append(formButton);
     }
     const downloadLink = document.createElement('a');
     downloadLink.textContent = 'กำลังเตรียม PDF…';
+    downloadLink.dataset.downloadPdf = '';
     downloadLink.style.cssText = 'display:inline-block;padding:10px 16px;background:#24344e;color:white;border-radius:6px;text-decoration:none';
     preview.querySelector('.print-tools').prepend(downloadLink);
     const downloadStatus = preview.querySelector('.print-tools span');
@@ -666,6 +668,14 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     preview.querySelector('[data-print-close]').onclick = () => { preview.dispatchEvent(new Event('pdf-close')); preview.remove(); document.title = previousTitle; };
     preview.querySelector('[data-print-now]').onclick = () => { document.title = doc.document_number; window.print(); };
     preview.querySelector('[data-print-now]').focus();
+  };
+  window.TaxDocumentOutput = async (number, mode) => {
+    await previewDocument(number);
+    const preview = document.querySelector('#document-preview');
+    if (!preview) throw Error('เปิดเอกสารไม่สำเร็จ');
+    const target = preview.querySelector(mode === 'continuous' ? '[data-print-continuous]' : mode === 'pdf' ? '[data-download-pdf][download]' : '[data-print-now]');
+    if (!target) throw Error(mode === 'pdf' ? 'ไฟล์ PDF ยังไม่พร้อม กรุณาตรวจข้อความในหน้าตัวอย่าง' : 'ไม่พบคำสั่งพิมพ์');
+    target.click();
   };
   window.DocumentPayment.bind(request, () => orgId, () => Boolean(session), login, () => {window.TaxPaymentFilters.refresh();window.TaxInvoiceControl.invalidate();});
   const openingDelivery = new Set();
