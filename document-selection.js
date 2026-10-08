@@ -62,24 +62,27 @@
           if (all) { all.checked = selected.length === rows.length; all.indeterminate = selected.length > 0 && selected.length < rows.length; }
           const count = 'เลือก ' + selected.length + ' เอกสาร';
           const counter = bar.querySelector('[data-selection-count]'); if (counter.textContent !== count) counter.textContent = count;
-          const help = selected.length > 1 ? 'เลือกครั้งละ 1 เอกสารเพื่อแก้ไขหรือออกเอกสารต่อ' : selected.length ? 'เลือกคำสั่งสำหรับเอกสารที่ติ๊กไว้' : 'ติ๊กหน้าเอกสารเพื่อแสดงคำสั่งที่ทำได้';
+          const help = selected.length > 1 ? 'เลือกครั้งละ 1 เอกสารเพื่อแก้ไขหรือออกเอกสารต่อ' : selected.length ? 'เลือกคำสั่งสำหรับเอกสารที่ติ๊กไว้' : 'เลือกเอกสารเพื่อใช้งานคำสั่ง';
           if (bar.querySelector('[data-selection-help]').textContent !== help) bar.querySelector('[data-selection-help]').textContent = help;
-          const source = selected.length === 1 ? [...selected[0].querySelectorAll('button')].filter(button => !button.hasAttribute('data-document-preview') && !button.hidden && getComputedStyle(button).display !== 'none') : [];
+          const candidates = (selected.length === 1 ? selected : rows).flatMap(row => [...row.querySelectorAll('button')]).filter(button => !button.hasAttribute('data-document-preview') && !button.hidden && getComputedStyle(button).display !== 'none');
+          const seen = new Set();
+          const source = candidates.filter(button => { const key=button.textContent.trim(); if(seen.has(key))return false; seen.add(key);return true; });
+          const needsSelection = selected.length !== 1;
           const actions = bar.querySelector('[data-selection-actions]');
-          const fingerprint = source.map(button => { if (!identities.has(button)) identities.set(button, ++nextIdentity); return identities.get(button) + button.outerHTML; }).join('');
+          const fingerprint = String(needsSelection) + source.map(button => { if (!identities.has(button)) identities.set(button, ++nextIdentity); return identities.get(button) + button.outerHTML; }).join('');
           if (actions.dataset.fingerprint === fingerprint) return;
           actions.dataset.fingerprint = fingerprint; actions.replaceChildren();
           source.forEach(original => {
             if (['tax-invoice-control', 'tax-invoices'].includes(id) && original.dataset.printDocument) {
               if (actions.querySelector('[data-tax-output]')) return;
               for (const [mode, label] of [['a4', 'พิมพ์ A4'], ['continuous', 'พิมพ์กระดาษต่อเนื่อง'], ['pdf', 'บันทึก PDF']]) {
-                const output = document.createElement('button'); output.type = 'button'; output.className = 'ghost'; output.dataset.taxOutput = mode; output.textContent = label; output.disabled = original.disabled;
+                const output = document.createElement('button'); output.type = 'button'; output.className = 'ghost'; output.dataset.taxOutput = mode; output.textContent = label; output.disabled = needsSelection || original.disabled;
                 output.onclick = async () => { output.disabled = true; try { await window.TaxDocumentOutput(original.dataset.printDocument, mode); } catch (error) { alert(error.message); } finally { output.disabled = original.disabled; } };
                 actions.append(output);
               }
               return;
             }
-            const button = document.createElement('button'); button.type = 'button'; button.className = 'ghost'; button.textContent = original.textContent.trim(); button.disabled = original.disabled;
+            const button = document.createElement('button'); button.type = 'button'; button.className = 'ghost'; button.textContent = original.textContent.trim(); button.disabled = needsSelection || original.disabled;
             button.onclick = () => { if (original.isConnected && !original.disabled) original.click(); };
             actions.append(button);
           });
