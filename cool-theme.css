@@ -1,0 +1,48 @@
+/* Shared ice-blue palette. Screen-only: printed documents retain their layout. */
+@media screen {
+  :root{--ink:#163b57;--muted:#62809a;--line:#d7e8f5;--mint:#159bd0;--navy:#087bac;--paper:#f1f8fe;--violet:#408fc9}
+  body{background:#f1f8fe;color:#163b57}
+  .app-shell{background:linear-gradient(135deg,#f4faff,#eaf5fe)}
+  .app-shell .sidebar{background:linear-gradient(165deg,#078dbb 0%,#159ed0 48%,#55afe0 100%);color:#fff}
+  .sidebar .brand small,.by-user small{color:#e1f3ff}
+  .by-brand-mark{border-bottom-color:#c7eaff}
+  .by-rail button{color:#edf8ff}
+  .by-rail button.active{background:#d9efff;color:#07567d;box-shadow:0 5px 16px #005d8e24}
+  .by-rail button.active:hover{background:#ebf7ff}
+  .sidebar nav .nav-link{color:#f0f9ff}
+  .sidebar nav .nav-link>span,.sidebar nav .nav-link:after{color:#def2ff}
+  .sidebar nav .nav-link.active{background:#e2f3ff2b;border-left-color:#d6efff;color:white}
+  .sidebar nav .nav-link:hover{background:#e2f3ff20}
+  .by-user>span{background:#e7f6ff;color:#0876a5}
+  .by-sidebar-footer #logout-button{color:#fff;border-color:#d2efff66}
+  .app-shell main header{border-bottom:1px solid #d7e8f5;padding-bottom:20px}
+  .app-shell .eyebrow,.app-shell .panel-title p{color:#62809a}
+  .app-shell .panel,.app-shell .stats article{border-color:#d7e8f5;box-shadow:0 4px 20px #388dc508}
+  .app-shell .primary,dialog .primary{background:#087fac!important;color:#fff!important;box-shadow:0 3px 8px #087fac20}
+  .app-shell .primary:hover,dialog .primary:hover{background:#066c96!important}
+  .app-shell .ghost,.app-shell .icon-button{border-color:#cce2f2;color:#24688f;background:#fff}
+  .app-shell .text-button{color:#087fac}
+  .app-shell .tab.active{background:#dcefff;color:#086c9b}
+  .app-shell .search{border-color:#cce2f2;color:#62809a}
+  .app-shell table thead{background:#edf6fd}
+  .app-shell th{color:#507795;border-bottom-color:#d7e8f5}
+  .app-shell td{border-bottom-color:#e7f1f9}
+  .app-shell tbody tr:hover{background:#f3faff}
+  .app-shell input,.app-shell select,.app-shell textarea{accent-color:#087fac;border-color:#cce2f2}
+  .app-shell input[type=checkbox]{accent-color:#087fac}
+  .app-shell .stat-icon.mint,.app-shell .stat-icon.violet,.app-shell .stat-icon.sky{background:#e0f2ff;color:#087fac}
+  .app-shell .bars i{background:#64b5e4}.app-shell .bars i:nth-child(6),.app-shell .bars i:nth-child(7),.app-shell .bars i:nth-child(9){background:#0c91c4}
+  .app-shell .empty-icon{color:#2b9bd0}
+  dialog::backdrop{background:#123e6659}
+  dialog .form-content,dialog .product-form{background:linear-gradient(180deg,#fff,#f3f9ff);color:#163b57}
+  dialog .field input,dialog .field select,dialog .product-form input,dialog .product-form select,dialog .product-form textarea{border-color:#bfdcef}
+  dialog .product-form-tip{background:#e4f4ff;color:#226e98}
+  .app-shell button:focus-visible,.app-shell input:focus-visible,dialog input:focus-visible,dialog select:focus-visible,dialog textarea:focus-visible{outline:2px solid #76c9f1;outline-offset:2px}
+  html[data-login-page] body{background:linear-gradient(130deg,#e5f5ff,#f5faff)}
+  html[data-login-page] .welcome{background:linear-gradient(155deg,#078dbb,#55afe0)}
+  html[data-login-page] .welcome p,html[data-login-page] .welcome small,html[data-login-page] .eyebrow{color:#e8f7ff}
+  html[data-login-page] .brand,html[data-login-page] .show{color:#087fac}
+  html[data-login-page] .submit{background:#087fac}
+  html[data-login-page] input{border-color:#cce2f2}
+  html[data-login-page] input:focus{outline-color:#76c9f1}
+}
