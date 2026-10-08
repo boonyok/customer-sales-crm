@@ -320,6 +320,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     window.ProductCodePicker?.configure(async()=>state.products);
     window.TaxInvoiceEdit?.configure(request,orgId,documentEditorCatalog,refreshTaxInvoiceViews);
     window.CashBillEdit?.configure(request,orgId,documentEditorCatalog,async()=>{await syncCashBills();});
+    window.BillingEdit?.configure(request,orgId,refreshTaxInvoiceViews);
     window.QuotationEdit?.configure(request,orgId,documentEditorCatalog,async()=>{await syncQuotations();state.quotations.forEach(quote=>{quote.taxInvoiceNumber=quotationTaxInvoices.get(quote.id)?.document_number||null;if(quote.statusCode==='approved')quote.status=quote.taxInvoiceNumber?'ออกใบกำกับภาษีแล้ว':'รอออกใบกำกับภาษี';});save();render();renderDocumentActions();addPrintButtons();});
     window.CustomerEdit?.configure(request,orgId,async()=>{await syncCustomers();save();render();document.querySelector('#customer-search').dispatchEvent(new Event('input'));});
     window.CustomerDelete?.configure(request,orgId,async()=>{await syncCustomers();save();render();document.querySelector('#customer-search').dispatchEvent(new Event('input'));});

@@ -8,6 +8,7 @@
   document.head.append(actionStyle);
   let scheduled = false;
   const identities = new WeakMap(); let nextIdentity = 0;
+  const editSelector='[data-edit-quotation],[data-edit-tax-invoice],[data-edit-cash-bill],[data-edit-note],[data-edit-billing]';
   function scan() {
     scheduled = false;
     for (const id of pages) {
@@ -39,16 +40,17 @@
         }
         rows.forEach(row => {
           const numberCell = row.cells[0];
-          if (id === 'quotations') {
-            const edit = row.querySelector('[data-edit-quotation]');
+          {
+            const edit = row.querySelector(editSelector);
             const canEdit = edit && !edit.disabled && !edit.hidden && getComputedStyle(edit).display !== 'none';
-            row.classList.toggle('quotation-edit-row', Boolean(canEdit));
-            if (canEdit) { row.tabIndex = 0; row.setAttribute('aria-label', 'แก้ไขใบเสนอราคา ' + edit.dataset.editQuotation); }
+            row.classList.toggle('document-edit-row', Boolean(canEdit));
+            if (canEdit) { row.tabIndex = 0; row.setAttribute('aria-label', edit.getAttribute('aria-label') || 'แก้ไขเอกสาร ' + numberCell.textContent.trim()); }
             else { row.removeAttribute('tabindex'); row.removeAttribute('aria-label'); }
             if (!row.dataset.rowEditBound) {
               row.dataset.rowEditBound = 'true';
-              const openEdit = () => { const button=row.querySelector('[data-edit-quotation]'); if(button && !button.disabled && !button.hidden && getComputedStyle(button).display!=='none')button.click(); };
+              const openEdit = () => { const button=row.querySelector(editSelector); if(button && !button.disabled && !button.hidden && getComputedStyle(button).display!=='none')button.click(); };
               row.addEventListener('click', event => { if(!event.target.closest('button,a,input,select,textarea,label'))openEdit(); });
+              row.addEventListener('click', event => {if(row.classList.contains('document-edit-row')&&event.target.closest('[data-document-preview],.tic-number')){event.preventDefault();event.stopImmediatePropagation();openEdit();}},true);
               row.addEventListener('keydown', event => { if(event.target===row && event.key==='Enter'){event.preventDefault();openEdit();} });
             }
           }
@@ -61,11 +63,11 @@
             numberText.forEach(node => link.append(node)); numberCell.append(link);
             link.onclick = () => previewButton.click();
           }
-          if (id === 'quotations') {
+          if (row.classList.contains('document-edit-row')) {
             const numberLink = numberCell.querySelector('[data-document-preview]');
             if (numberLink) {
-              numberLink.setAttribute('aria-label', 'แก้ไขใบเสนอราคา ' + numberCell.textContent.trim());
-              numberLink.onclick = () => { const edit=row.querySelector('[data-edit-quotation]'); if(edit && !edit.disabled && !edit.hidden && getComputedStyle(edit).display!=='none')edit.click(); };
+              numberLink.setAttribute('aria-label', 'แก้ไขเอกสาร ' + numberCell.textContent.trim());
+              numberLink.onclick = () => { const edit=row.querySelector(editSelector); if(edit && !edit.disabled && !edit.hidden && getComputedStyle(edit).display!=='none')edit.click(); };
             }
           }
           if (row.querySelector('[data-document-check]')) return;
