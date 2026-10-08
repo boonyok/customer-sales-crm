@@ -530,7 +530,9 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     if (deletingQuotations.has(id)) return;
     const quote=state.quotations.find(q=>q.id===id);
     if (!quote) return;
-    if(!window.confirm(`ลบใบเสนอราคา ${quote.no} ถาวรหรือไม่?\nการลบนี้กู้คืนไม่ได้ เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`))return;
+    const messageToConfirm=`ลบใบเสนอราคา ${quote.no} ถาวรหรือไม่?\nการลบนี้กู้คืนไม่ได้ เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`;
+    if(!await (window.DocumentDeleteConfirm?.ask(messageToConfirm)??window.confirm(messageToConfirm)))return;
+    if(deletingQuotations.has(id))return;
     deletingQuotations.add(id);
     const controls=[...action.closest('tr').querySelectorAll('button')];
     controls.forEach(control=>control.disabled=true);action.textContent='กำลังลบ…';

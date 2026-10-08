@@ -32,7 +32,9 @@
         button.onclick=async()=>{
           const actionOrg=organizationId,key=`${actionOrg}:${kind}:${number}`;
           if(pending.has(key))return;
-          if(!window.confirm(`ลบ${names[kind]} ${number} ถาวรหรือไม่?\nกู้คืนไม่ได้ แต่เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`))return;
+          const messageToConfirm=`ลบ${names[kind]} ${number} ถาวรหรือไม่?\nกู้คืนไม่ได้ แต่เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`;
+          if(!await (window.DocumentDeleteConfirm?.ask(messageToConfirm)??window.confirm(messageToConfirm)))return;
+          if(pending.has(key))return;
           pending.add(key);const controls=[...row.querySelectorAll('button,input')],disabled=controls.map(c=>c.disabled);controls.forEach(c=>c.disabled=true);
           notice(page,`กำลังลบถาวร ${number}…`);
           try{await remove(api,actionOrg,kind,number);}

@@ -26,7 +26,9 @@
       let busy=false;
       const run=async(name,label,confirm=false)=>{
         if(busy||pending.has(doc.id))return;
-        if(confirm&&!window.confirm(`ลบใบกำกับภาษี ${doc.document_number} ถาวรหรือไม่? การลบนี้กู้คืนไม่ได้`))return;
+        const messageToConfirm=`ลบใบกำกับภาษี ${doc.document_number} ถาวรหรือไม่?\nการลบนี้กู้คืนไม่ได้`;
+        if(confirm&&!await (window.DocumentDeleteConfirm?.ask(messageToConfirm)??window.confirm(messageToConfirm)))return;
+        if(busy||pending.has(doc.id))return;
         busy=true;actions.querySelectorAll('button').forEach(button=>button.disabled=true);
         notify(root,`กำลัง${label} ${doc.document_number}…`);
         let result;
