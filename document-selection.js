@@ -38,6 +38,16 @@
           all.onchange = () => { rows.forEach(row => row.querySelector('[data-document-check]').checked = all.checked); update(); };
         }
         rows.forEach(row => {
+          const numberCell = row.cells[0];
+          const previewButton = row.querySelector('[data-view], [data-print-document]');
+          if (previewButton && !numberCell.querySelector('button, a')) {
+            // Keep the text and column positions used by existing document actions.
+            const numberText = [...numberCell.childNodes].filter(node => !(node.nodeType === 1 && node.matches('input')));
+            const link = document.createElement('button'); link.type = 'button'; link.className = 'text-button'; link.dataset.documentPreview = '';
+            link.setAttribute('aria-label', 'ดูตัวอย่างเอกสาร ' + numberCell.textContent.trim());
+            numberText.forEach(node => link.append(node)); numberCell.append(link);
+            link.onclick = () => previewButton.click();
+          }
           if (row.querySelector('[data-document-check]')) return;
           const input = document.createElement('input'); input.type = 'checkbox'; input.dataset.documentCheck = ''; input.className = 'document-selection-check';
           input.setAttribute('aria-label', 'เลือกเอกสาร ' + row.cells[0].textContent.trim());
@@ -54,7 +64,7 @@
           const counter = bar.querySelector('[data-selection-count]'); if (counter.textContent !== count) counter.textContent = count;
           const help = selected.length > 1 ? 'เลือกครั้งละ 1 เอกสารเพื่อแก้ไขหรือออกเอกสารต่อ' : selected.length ? 'เลือกคำสั่งสำหรับเอกสารที่ติ๊กไว้' : 'ติ๊กหน้าเอกสารเพื่อแสดงคำสั่งที่ทำได้';
           if (bar.querySelector('[data-selection-help]').textContent !== help) bar.querySelector('[data-selection-help]').textContent = help;
-          const source = selected.length === 1 ? [...selected[0].querySelectorAll('button')].filter(button => !button.hidden && getComputedStyle(button).display !== 'none') : [];
+          const source = selected.length === 1 ? [...selected[0].querySelectorAll('button')].filter(button => !button.hasAttribute('data-document-preview') && !button.hidden && getComputedStyle(button).display !== 'none') : [];
           const actions = bar.querySelector('[data-selection-actions]');
           const fingerprint = source.map(button => { if (!identities.has(button)) identities.set(button, ++nextIdentity); return identities.get(button) + button.outerHTML; }).join('');
           if (actions.dataset.fingerprint === fingerprint) return;
