@@ -7,7 +7,7 @@
   ];
   const groupFor = page => page === 'dashboard' ? 'overview' : ['quotations','tax-invoices','tax-invoice-control','delivery-notes','invoices','billing','cash-bills'].includes(page) ? 'sales' : ['customers','products','company-profile'].includes(page) ? 'data' : ['members','settings'].includes(page) ? 'settings' : 'tools';
   const brand = sidebar.querySelector('.brand');
-  brand.innerHTML = '<span class="by-brand-mark">BY</span><span><strong>BOONYOK</strong><small>Supply Workspace</small></span>';
+  brand.innerHTML = '<span class="by-brand-mark">BY</span><span><strong>BOONYOK</strong><small>SUPPLY CO., LTD.</small></span>';
   const rail = document.createElement('div'); rail.className = 'by-rail'; rail.setAttribute('aria-label','หมวดเมนูหลัก');
   groups.forEach(([key,label,icon]) => { const button=document.createElement('button');button.type='button';button.dataset.rail=key;button.innerHTML='<span aria-hidden="true">'+icon+'</span><small>'+label+'</small>';button.onclick=()=>show(key);rail.append(button); });
   const body = document.createElement('div'); body.className='by-sidebar-body';
