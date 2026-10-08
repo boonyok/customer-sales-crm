@@ -86,7 +86,13 @@
           if (bar.querySelector('[data-selection-help]').textContent !== help) bar.querySelector('[data-selection-help]').textContent = help;
           const candidates = (selected.length === 1 ? selected : rows).flatMap(row => [...row.querySelectorAll('button')]).filter(button => !button.hasAttribute('data-document-preview') && !button.hidden && getComputedStyle(button).display !== 'none');
           const seen = new Set();
-          const source = candidates.filter(button => { const key=button.textContent.trim(); if(seen.has(key))return false; seen.add(key);return true; });
+          const source = candidates.filter(button => { const key=button.textContent.trim(); if(id==='quotations'&&(button.hasAttribute('data-edit-quotation')||key==='แก้ไข'))return false; if(seen.has(key))return false; seen.add(key);return true; });
+          const quotationLabel = button => /ออกใบส่ง/.test(button.textContent) ? 'ออกใบส่งของ' : /พิมพ์|PDF/.test(button.textContent) ? 'พิมพ์ PDF' : button.textContent.trim();
+          if(id==='quotations'){
+            const order=['ออกใบกำกับภาษี','ออกใบส่งของ','พิมพ์ PDF','ดูใบกำกับภาษี'];
+            const rank=button=>{const index=order.indexOf(quotationLabel(button));return index<0?order.length:index;};
+            source.sort((a,b)=>rank(a)-rank(b));
+          }
           const needsSelection = selected.length !== 1;
           const actions = bar.querySelector('[data-selection-actions]');
           const fingerprint = String(needsSelection) + source.map(button => { if (!identities.has(button)) identities.set(button, ++nextIdentity); return identities.get(button) + button.outerHTML; }).join('');
@@ -102,7 +108,7 @@
               }
               return;
             }
-            const button = document.createElement('button'); button.type = 'button'; button.className = 'ghost'; button.textContent = original.textContent.trim(); button.disabled = needsSelection || original.disabled;
+            const button = document.createElement('button'); button.type = 'button'; button.className = 'ghost'; button.textContent = id==='quotations'?quotationLabel(original):original.textContent.trim(); button.disabled = needsSelection || original.disabled;
             button.onclick = () => { if (original.isConnected && !original.disabled) original.click(); };
             actions.append(button);
           });
