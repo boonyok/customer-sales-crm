@@ -10,6 +10,7 @@
   .by-rail button.active{background:#d9efff;color:#07567d;box-shadow:0 5px 16px #005d8e24}
   .by-rail button.active:hover{background:#ebf7ff}
   .sidebar nav .nav-link{color:#f0f9ff}
+  .sidebar nav .nav-link[data-page="dashboard"]{display:none!important}
   .sidebar nav .nav-link>span,.sidebar nav .nav-link:after{color:#def2ff}
   .sidebar nav .nav-link.active{background:#e2f3ff2b;border-left-color:#d6efff;color:white}
   .sidebar nav .nav-link:hover{background:#e2f3ff20}

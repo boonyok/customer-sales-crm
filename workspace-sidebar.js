@@ -9,7 +9,8 @@
   const brand = sidebar.querySelector('.brand');
   brand.innerHTML = '<span class="by-brand-mark">BY</span><span><strong>BOONYOK</strong><small>SUPPLY CO., LTD.</small></span>';
   const rail = document.createElement('div'); rail.className = 'by-rail'; rail.setAttribute('aria-label','หมวดเมนูหลัก');
-  groups.forEach(([key,label,icon]) => { const button=document.createElement('button');button.type='button';button.dataset.rail=key;button.innerHTML='<span aria-hidden="true">'+icon+'</span><small>'+label+'</small>';button.onclick=()=>show(key);rail.append(button); });
+  if(typeof pageMeta!=='undefined')pageMeta.dashboard=['ภาพรวม','ภาพรวม'];
+  groups.forEach(([key,label,icon]) => { const button=document.createElement('button');button.type='button';button.dataset.rail=key;button.innerHTML='<span aria-hidden="true">'+icon+'</span><small>'+label+'</small>';button.onclick=()=>{if(key==='overview'){window.go('dashboard');if(document.getElementById('dashboard')?.classList.contains('active-page'))history.replaceState(null,'','#dashboard');}else show(key);};rail.append(button); });
   const body = document.createElement('div'); body.className='by-sidebar-body';
   const submenu = document.createElement('div'); submenu.className='by-submenu';
   const heading = document.createElement('p'); heading.className='by-submenu-heading';
@@ -27,6 +28,7 @@
     nav.querySelectorAll('.nav-link[data-page]').forEach(button=>{const visible=groupFor(button.dataset.page)===key;const value=String(visible);if(button.dataset.menuVisible!==value)button.dataset.menuVisible=value;});
   }
   function sync() {
+    if(document.getElementById('dashboard')?.classList.contains('active-page')){const title=document.getElementById('page-title');if(title&&title.textContent!=='ภาพรวม')title.textContent='ภาพรวม';}
     const active=nav.querySelector('.nav-link.active[data-page]');
     if(active && active.dataset.page!==sync.lastPage){sync.lastPage=active.dataset.page;current=groupFor(sync.lastPage);}
     show(current);
