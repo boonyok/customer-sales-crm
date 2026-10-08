@@ -511,9 +511,13 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     try {
       const result = await window.QuotationTax.issue(request, orgId, quote);
       quotationTaxInvoices.set(id, result);
+      // Navigate as soon as issuance succeeds, even if refreshing another view fails.
+      window.TaxPaymentFilters.showAll();
+      window.go('tax-invoices');
+      history.replaceState(null, '', '#tax-invoices');
       try { await syncAll(); }
       catch { alert(`ใบกำกับภาษี ${result.document_number} บันทึกแล้ว แต่โหลดรายการไม่สำเร็จ กรุณารีเฟรช ไม่ต้องออกใหม่`); return; }
-      go('tax-invoices');
+      window.TaxPaymentFilters.showAll();
       alert(`${result.created ? 'ออกใบกำกับภาษีแล้ว' : 'เปิดใบกำกับภาษีเดิม ไม่ได้ออกซ้ำ'}: ${result.document_number}`);
     } catch (error) { alert(error.message); }
     finally {
