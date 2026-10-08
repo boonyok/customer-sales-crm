@@ -3,6 +3,9 @@
   const style = document.createElement('style');
   style.textContent = '.document-selection-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;margin:12px 0;border:1px solid #d5e4e1;border-radius:12px;background:#f4faf8}.document-selection-bar p{margin:0;color:#55716a;font-size:13px}.document-selection-cell{position:relative;padding-left:44px!important}.document-selection-check{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px!important;height:18px;accent-color:#245b57;cursor:pointer}.document-selected{background:#edf7f4!important}.document-selection-bar button:disabled{opacity:.45;cursor:not-allowed}';
   document.head.append(style);
+  const actionStyle = document.createElement('style');
+  actionStyle.textContent = '.document-row-actions{display:none!important}';
+  document.head.append(actionStyle);
   let scheduled = false;
   const identities = new WeakMap(); let nextIdentity = 0;
   function scan() {
@@ -15,6 +18,12 @@
         if (!table.tBodies.length || !table.tHead) return;
         const rows = [...table.tBodies[0].rows].filter(row => row.cells.length > 1 && row.querySelector('button'));
         if (!rows.length) return;
+        table.classList.add('document-selection-table');
+        const actionHeader = table.tHead.rows[0]?.lastElementChild;
+        if (actionHeader && (!actionHeader.textContent.trim() || /^(เอกสาร|การจัดการ|จัดการ)$/.test(actionHeader.textContent.trim()))) {
+          actionHeader.classList.add('document-row-actions');
+          rows.forEach(row => row.lastElementChild.classList.add('document-row-actions'));
+        }
         let bar = table.parentElement.querySelector(':scope > .document-selection-bar');
         if (!bar) {
           bar = document.createElement('div'); bar.className = 'document-selection-bar';
