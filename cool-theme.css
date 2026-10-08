@@ -45,6 +45,8 @@
   .app-shell .primary:hover,dialog .primary:hover{background:#066c96!important}
   .app-shell .ghost,.app-shell .icon-button{border-color:#cce2f2;color:#24688f;background:#fff}
   .app-shell .text-button{color:#087fac}
+  .app-shell .badge.tax-awaiting{background:#fff1d6;color:#925000;border:1px solid #efc16c;font-weight:600}
+  .app-shell .badge.tax-issued{background:#daf3e4;color:#18613d;border:1px solid #88cca5;font-weight:600}
   .app-shell .tab.active{background:#dcefff;color:#086c9b}
   .app-shell .search{border-color:#cce2f2;color:#62809a}
   .app-shell table thead{background:#edf6fd}

@@ -3,7 +3,7 @@ const seed={customers:[{name:'บริษัท สยามรีเทล จ
 const state=localStorage.getItem('flowbill-session')?{customers:[],products:[],quotations:[]}:seed;
 const save=()=>{if(localStorage.getItem('flowbill-session'))localStorage.removeItem('flowbill-crm');};
 if(localStorage.getItem('flowbill-session'))localStorage.removeItem('flowbill-crm');
-const badge=s=>`<span class="badge ${s==='อนุมัติแล้ว'||s==='ใช้งาน'?'approved':s==='รออนุมัติ'?'pending':'draft'}">${s}</span>`;
+const badge=s=>`<span class="badge ${s==='ออกใบกำกับภาษีแล้ว'?'tax-issued':s==='รอออกใบกำกับภาษี'?'tax-awaiting':s==='อนุมัติแล้ว'||s==='ใช้งาน'?'approved':s==='รออนุมัติ'?'pending':'draft'}">${s}</span>`;
 function productDeleteButton(product){return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(product.id||'')?`<button type="button" class="ghost" data-delete-product="${product.id}" style="color:#bd3345;border-color:#edcbd0" aria-label="ลบสินค้า">ลบ</button>`:'';}
 let productPage=0,productQuery='',productRows=null,productMatches=[];
 const productPageSize=100;
