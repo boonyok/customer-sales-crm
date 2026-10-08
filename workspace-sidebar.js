@@ -3,7 +3,7 @@
   const nav = sidebar?.querySelector('nav');
   if (!nav) return;
   const groups = [
-    ['overview','ภาพรวม','▦'], ['sales','งานขาย','▣'], ['data','ข้อมูล','▥'], ['tools','เครื่องมือ','⚒'], ['settings','ตั้งค่า','⚙']
+    ['overview','ภาพรวม','▦'], ['sales','งานขาย','▣'], ['data','ข้อมูล','▥'], ['tools','งานบัญชี','⚒'], ['settings','ตั้งค่า','⚙']
   ];
   const groupFor = page => page === 'dashboard' ? 'overview' : ['quotations','tax-invoices','tax-invoice-control','delivery-notes','invoices','billing','cash-bills'].includes(page) ? 'sales' : ['customers','products','company-profile'].includes(page) ? 'data' : ['members','settings'].includes(page) ? 'settings' : 'tools';
   const brand = sidebar.querySelector('.brand');
