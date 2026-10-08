@@ -9,6 +9,11 @@
   .document-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
   .document-metrics article{display:flex;align-items:center;gap:14px;padding:21px;background:#fff;border:1px solid #d5e7f5;border-radius:15px;box-shadow:0 4px 14px #217aaa06;min-width:0}
   .document-metrics article[hidden]{display:none}
+  .document-metrics article[data-quotation-summary-filter]{cursor:pointer;transition:border-color .18s,box-shadow .18s,background .18s}
+  .document-metrics article[data-quotation-summary-filter]:hover{border-color:#69b8e2;background:#f7fcff;box-shadow:0 5px 18px #087fac12}
+  .document-metrics article.summary-active{border-color:#168fbd;background:#eff9ff;box-shadow:inset 0 0 0 1px #168fbd}
+  .document-metrics article[data-quotation-summary-filter]:focus-visible{outline:3px solid #79c9ee;outline-offset:3px}
+  @media(prefers-reduced-motion:reduce){.document-metrics article[data-quotation-summary-filter]{transition:none}}
   .document-metric-icon{display:grid;place-items:center;width:43px;height:43px;flex:none;background:#e0f3ff;border-radius:12px;color:#087fac;font:700 20px Manrope,sans-serif}
   .document-metrics article:nth-child(2) .document-metric-icon{background:#e9f4ff;color:#3b89c7}
   .document-metrics article:nth-child(3) .document-metric-icon{background:#d9f5fb;color:#067994}
@@ -16,6 +21,8 @@
   .document-metrics strong{display:block;font:700 25px Manrope,sans-serif;color:#225778;overflow-wrap:anywhere}
   .document-workspace .panel{border-radius:16px;padding:22px;border-color:#d5e7f5}
   .document-workspace .page-toolbar{gap:14px;flex-wrap:wrap}
+  /* Summary cards replace this duplicate toolbar; retain its filter handlers. */
+  #quotations > .page-toolbar:has(.tabs){display:none}
   .document-workspace .search{border-radius:10px;padding:11px 12px}
   .document-workspace .document-selection-bar{background:#edf7ff;border-color:#cce4f6;border-radius:12px;padding:14px 16px}
   .document-workspace .document-selection-bar p{color:#547b95}

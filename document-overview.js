@@ -19,12 +19,23 @@
         if(!overview.dataset.quotationSummary){
           overview.dataset.quotationSummary='true';
           overview.innerHTML='<div class="document-section-heading"><span>ภาพรวมเอกสาร</span><small>สรุปใบเสนอราคาทั้งหมด ไม่เปลี่ยนตามตัวกรองตาราง</small></div><div class="document-metrics"><article><span class="document-metric-icon">▤</span><div><small>ใบเสนอราคาทั้งหมด</small><strong data-quote-total>0</strong></div></article><article><span class="document-metric-icon">◷</span><div><small>รออนุมัติ</small><strong data-quote-pending>0</strong></div></article><article><span class="document-metric-icon">✓</span><div><small>อนุมัติแล้ว</small><strong data-quote-approved>0</strong></div></article></div>';
+          overview.querySelectorAll('.document-metrics article').forEach((card,index)=>{
+            const key=['all','sent','approved'][index];
+            card.dataset.quotationSummaryFilter=key;
+            card.setAttribute('role','button');card.tabIndex=0;
+            card.setAttribute('aria-label','แสดง'+card.querySelector('small').textContent);
+            const activate=()=>{page.querySelector('[data-quotation-filter="'+key+'"]')?.click();schedule();};
+            card.onclick=activate;
+            card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();activate();}};
+          });
         }
         const counts=typeof state!=='undefined'&&window.QuotationFilters?window.QuotationFilters.select(state.quotations||[]).counts:null;
         for(const [key,selector] of [['all','[data-quote-total]'],['sent','[data-quote-pending]'],['approved','[data-quote-approved]']]){
           const tab=page.querySelector('[data-quotation-filter="'+key+'"]');
           const count=counts?.[key]??Number(tab?.textContent.match(/\((\d+)\)/)?.[1]||0);
           const el=overview.querySelector(selector),value=nf.format(count);if(el.textContent!==value)el.textContent=value;
+          const card=el.closest('article'),active=tab?.getAttribute('aria-pressed')==='true';
+          card.classList.toggle('summary-active',active);card.setAttribute('aria-pressed',String(active));
         }
         return;
       }
@@ -42,6 +53,6 @@
   const schedule=()=>{if(!queued){queued=true;requestAnimationFrame(scan);}};
   new MutationObserver(schedule).observe(document.querySelector('main'),{childList:true,subtree:true});
   document.addEventListener('change',event=>{if(event.target.matches('[data-document-check],[data-document-all]'))schedule();});
-  document.addEventListener('click',event=>{if(event.target.closest('[data-clear-selection]'))schedule();});
+  document.addEventListener('click',event=>{if(event.target.closest('[data-clear-selection],[data-quotation-filter]'))schedule();});
   window.addEventListener('hashchange',schedule);scan();
 })();
