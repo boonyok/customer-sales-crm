@@ -16,9 +16,6 @@
   pageMeta['tax-invoice-control']=['งานขาย','ศูนย์ควบคุมใบกำกับภาษี'];
   const taxControlPage=document.createElement('section');taxControlPage.id='tax-invoice-control';taxControlPage.className='page';
   taxControlPage.innerHTML='<article class="panel settings-card"><h3>ศูนย์ควบคุมใบกำกับภาษี</h3><p>เข้าสู่ระบบเพื่อดูเอกสารทั้งหมด</p></article>';taxPage.after(taxControlPage);
-  pageMeta['tax-invoice-trash']=['งานขาย','ถังขยะใบกำกับภาษี'];
-  const taxTrashPage=document.createElement('section');taxTrashPage.id='tax-invoice-trash';taxTrashPage.className='page tax-invoice-workspace';
-  taxTrashPage.innerHTML='<article class="panel settings-card"><h3>ถังขยะใบกำกับภาษี</h3><p>เข้าสู่ระบบเพื่อดูเอกสารที่ลบ</p></article>';taxControlPage.after(taxTrashPage);
   taxControlPage.classList.add('tax-invoice-workspace');
   for (const [id, title, description] of [
     ['delivery-notes', 'ใบส่งสินค้า', 'เอกสารสำหรับแสดงรายการสินค้าและการรับมอบสินค้า'],
@@ -283,9 +280,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     };
     const controlButton=document.createElement('button');controlButton.type='button';controlButton.className='ghost';controlButton.textContent='รวมข้อมูลใบกำกับภาษี';
     controlButton.onclick=async()=>{if(!session||!orgId)return login();await window.TaxInvoiceControl.open(request,orgId);};
-    const trashButton=document.createElement('button');trashButton.type='button';trashButton.className='ghost';trashButton.textContent='ถังขยะ';
-    trashButton.onclick=async()=>{if(!session||!orgId)return login();await window.TaxInvoiceControl.open(request,orgId,'trash');};
-    const taxActions=document.createElement('div');taxActions.style.cssText='display:flex;gap:10px;flex-wrap:wrap';taxActions.append(controlButton,trashButton,createButton);
+    const taxActions=document.createElement('div');taxActions.style.cssText='display:flex;gap:10px;flex-wrap:wrap';taxActions.append(controlButton,createButton);
     taxPanel.querySelector('.panel-title').append(taxActions);
     // Classification controls live in the document control center only.
     taxPanel.querySelector('.panel-title p')?.remove();
@@ -535,6 +530,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     if (deletingQuotations.has(id)) return;
     const quote=state.quotations.find(q=>q.id===id);
     if (!quote) return;
+    if(!window.confirm(`ลบใบเสนอราคา ${quote.no} ถาวรหรือไม่?\nการลบนี้กู้คืนไม่ได้ เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`))return;
     deletingQuotations.add(id);
     const controls=[...action.closest('tr').querySelectorAll('button')];
     controls.forEach(control=>control.disabled=true);action.textContent='กำลังลบ…';

@@ -1,6 +1,6 @@
 (() => {
   const create=async(request,org,invoice,date,credit,manualDocumentNumber='')=>{
-    if(!org||invoice?.organization_id!==org||!invoice.id||invoice.kind!=='tax_invoice'||!['sent','approved','paid','overdue'].includes(invoice.status))throw Error('กรุณาเลือกใบกำกับภาษีที่ออกแล้ว');
+    if(!org||invoice?.organization_id!==org||!invoice.id||invoice.deleted_at||invoice.kind!=='tax_invoice'||!['sent','approved','paid','overdue'].includes(invoice.status))throw Error('กรุณาเลือกใบกำกับภาษีที่ออกแล้ว');
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isInteger(credit)||credit<0||credit>3650)throw Error('กรุณาระบุวันที่และเครดิต 0–3650 วัน');
     const result=await window.DocumentNumber.call(request,'create_invoice_billing_note',{p_org:org,p_invoice:invoice.id,p_date:date,p_credit:credit},manualDocumentNumber);
     if(!result?.id||result.invoice_id!==invoice.id||!result.document_number)throw Error('ยังยืนยันผลไม่ได้ กรุณาลองตรวจสอบอีกครั้ง ระบบจะใช้ใบวางบิลเดิมโดยไม่สร้างซ้ำ');
@@ -32,7 +32,7 @@
     root.querySelectorAll('tbody tr').forEach((row,i)=>{
       const invoice=rows[i];if(!invoice){row.firstElementChild.colSpan=9;return;}
       const cell=document.createElement('td'),button=document.createElement('button');button.type='button';button.className='ghost';button.textContent='ออกใบวางบิล';button.style.whiteSpace='nowrap';
-      button.disabled=!['sent','approved','paid','overdue'].includes(invoice.status);if(button.disabled)button.title='ใช้ได้เฉพาะใบกำกับภาษีที่ออกแล้ว';
+      button.disabled=!!invoice.deleted_at||!['sent','approved','paid','overdue'].includes(invoice.status);if(button.disabled)button.title='ใช้ได้เฉพาะใบกำกับภาษีที่ออกแล้วและยังไม่ถูกลบ';
       button.onclick=()=>ask(request,org,invoice,onSaved);cell.append(button);row.insertBefore(cell,row.children[6]);
     });
   };

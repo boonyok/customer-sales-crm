@@ -7,7 +7,7 @@
   const mount=root=>{
     if(root.querySelector('[name=manualDocumentNumber]'))return;
     const label=document.createElement('label');label.className='field';
-    label.innerHTML='<span>เลขที่เอกสาร (กรอกเองได้)</span><input name="manualDocumentNumber" maxlength="80" placeholder="เว้นว่างเพื่อรันเลขอัตโนมัติ" autocomplete="off" style="width:100%;padding:10px;border:1px solid #ccd4dd;border-radius:6px;font:inherit"><small>ใช้ A–Z, 0–9 และ . _ / - • ห้ามซ้ำรวมถังขยะ • ใช้เลขเดิมได้หลังลบถาวร</small>';
+    label.innerHTML='<span>เลขที่เอกสาร (กรอกเองได้)</span><input name="manualDocumentNumber" maxlength="80" placeholder="เว้นว่างเพื่อรันเลขอัตโนมัติ" autocomplete="off" style="width:100%;padding:10px;border:1px solid #ccd4dd;border-radius:6px;font:inherit"><small>ใช้ A–Z, 0–9 และ . _ / - • ห้ามซ้ำกับเลขที่ยังมีอยู่ • ใช้เลขเดิมได้หลังลบถาวร</small>';
     const grid=root.querySelector('.qe-grid');if(grid)grid.prepend(label);else root.querySelector('h2').after(label);
   };
   const read=root=>normalize(root.querySelector('[name=manualDocumentNumber]')?.value);

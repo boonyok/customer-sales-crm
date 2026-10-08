@@ -9,7 +9,7 @@
     const rows=await request(`/rest/v1/${table}?organization_id=eq.${encodeURIComponent(org)}&document_number=eq.${encodeURIComponent(number)}${table==='documents'?`&kind=eq.${kind}`:''}&select=id,document_number&limit=2`);
     if(rows.length!==1||rows[0].document_number!==number)throw Error('ไม่พบเอกสาร กรุณาโหลดรายการใหม่');
     const doc=rows[0];
-    const result=await request(`/rest/v1/rpc/${kind==='tax_invoice'?'delete_tax_invoice':'delete_sales_document'}`,{method:'POST',body:JSON.stringify({p_org:org,p_id:doc.id,p_number:number,...(kind==='tax_invoice'?{}:{p_kind:kind})})});
+    const result=await request(`/rest/v1/rpc/${kind==='tax_invoice'?'delete_tax_invoice_permanently':'delete_sales_document'}`,{method:'POST',body:JSON.stringify({p_org:org,p_id:doc.id,p_number:number,...(kind==='tax_invoice'?{}:{p_kind:kind})})});
     if(result?.id!==doc.id||result?.deleted!==true)throw Error('ยังยืนยันการลบไม่ได้ กรุณาโหลดรายการใหม่');
     return result;
   };
@@ -26,19 +26,18 @@
       page.querySelectorAll(id==='invoices'?'article:first-of-type table tbody tr':'tbody tr').forEach(row=>{
         if(!row.querySelector('[data-print-document],[data-view]')||row.querySelector('[data-delete-sales-document]'))return;
         const number=row.cells[0]?.textContent.trim();if(!number)return;
-        const button=document.createElement('button');button.type='button';button.className='ghost';button.style.color='#b42332';button.textContent='ลบ';
+        const button=document.createElement('button');button.type='button';button.className='ghost';button.style.color='#b42332';button.textContent='ลบถาวร';
         button.dataset.deleteSalesDocument=kind;button.setAttribute('aria-label',`ลบ${names[kind]} ${number}`);
         row.lastElementChild.append(button);
         button.onclick=async()=>{
           const actionOrg=organizationId,key=`${actionOrg}:${kind}:${number}`;
           if(pending.has(key))return;
-          const trash=kind==='tax_invoice';
-          if(!trash&&!window.confirm(`ลบ${names[kind]} ${number} ถาวรหรือไม่?\nกู้คืนไม่ได้ แต่เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`))return;
+          if(!window.confirm(`ลบ${names[kind]} ${number} ถาวรหรือไม่?\nกู้คืนไม่ได้ แต่เอกสารอื่นที่เชื่อมกันจะยังคงอยู่`))return;
           pending.add(key);const controls=[...row.querySelectorAll('button,input')],disabled=controls.map(c=>c.disabled);controls.forEach(c=>c.disabled=true);
-          notice(page,`กำลัง${trash?'ย้ายไปถังขยะ':'ลบ'} ${number}…`);
+          notice(page,`กำลังลบถาวร ${number}…`);
           try{await remove(api,actionOrg,kind,number);}
           catch(error){notice(page,error.message);controls.forEach((c,i)=>c.disabled=disabled[i]);pending.delete(key);return;}
-          row.remove();const message=`${trash?'ย้ายไปถังขยะ':'ลบ'} ${number} แล้ว`;
+          row.remove();const message=`ลบถาวร ${number} แล้ว`;
           notice(page,message);
           try{if(organizationId===actionOrg)await refresh(kind);notice(page,message);}
           catch{notice(page,`${message} แต่โหลดรายการใหม่ไม่สำเร็จ กรุณารีเฟรช ไม่ต้องลบซ้ำ`);}
