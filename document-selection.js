@@ -39,6 +39,19 @@
         }
         rows.forEach(row => {
           const numberCell = row.cells[0];
+          if (id === 'quotations') {
+            const edit = row.querySelector('[data-edit-quotation]');
+            const canEdit = edit && !edit.disabled && !edit.hidden && getComputedStyle(edit).display !== 'none';
+            row.classList.toggle('quotation-edit-row', Boolean(canEdit));
+            if (canEdit) { row.tabIndex = 0; row.setAttribute('aria-label', 'แก้ไขใบเสนอราคา ' + edit.dataset.editQuotation); }
+            else { row.removeAttribute('tabindex'); row.removeAttribute('aria-label'); }
+            if (!row.dataset.rowEditBound) {
+              row.dataset.rowEditBound = 'true';
+              const openEdit = () => { const button=row.querySelector('[data-edit-quotation]'); if(button && !button.disabled && !button.hidden && getComputedStyle(button).display!=='none')button.click(); };
+              row.addEventListener('click', event => { if(!event.target.closest('button,a,input,select,textarea,label'))openEdit(); });
+              row.addEventListener('keydown', event => { if(event.target===row && event.key==='Enter'){event.preventDefault();openEdit();} });
+            }
+          }
           const previewButton = row.querySelector('[data-view], [data-print-document]');
           if (previewButton && !numberCell.querySelector('button, a')) {
             // Keep the text and column positions used by existing document actions.
@@ -47,6 +60,13 @@
             link.setAttribute('aria-label', 'ดูตัวอย่างเอกสาร ' + numberCell.textContent.trim());
             numberText.forEach(node => link.append(node)); numberCell.append(link);
             link.onclick = () => previewButton.click();
+          }
+          if (id === 'quotations') {
+            const numberLink = numberCell.querySelector('[data-document-preview]');
+            if (numberLink) {
+              numberLink.setAttribute('aria-label', 'แก้ไขใบเสนอราคา ' + numberCell.textContent.trim());
+              numberLink.onclick = () => { const edit=row.querySelector('[data-edit-quotation]'); if(edit && !edit.disabled && !edit.hidden && getComputedStyle(edit).display!=='none')edit.click(); };
+            }
           }
           if (row.querySelector('[data-document-check]')) return;
           const input = document.createElement('input'); input.type = 'checkbox'; input.dataset.documentCheck = ''; input.className = 'document-selection-check';

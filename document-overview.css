@@ -31,6 +31,8 @@
   .document-workspace table thead{background:#edf6fd}
   .document-workspace th{padding-top:14px;padding-bottom:14px}
   .document-workspace td{padding-top:17px;padding-bottom:17px}
+  #quotations .quotation-edit-row{cursor:pointer}
+  #quotations .quotation-edit-row:focus-visible{outline:2px solid #168fbd;outline-offset:-2px;background:#edf8ff}
   @media(max-width:1100px){.document-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media(max-width:600px){.document-metrics{grid-template-columns:1fr}.document-section-heading{display:block}.document-section-heading small{display:block;margin-top:4px}main:has(.document-workspace.active-page)>header{padding:22px;flex-wrap:wrap}.document-metrics article{padding:16px}}
 }
