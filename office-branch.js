@@ -2,16 +2,17 @@
  const normalize=value=>{const s=String(value??'').trim();if(!/^\d{1,5}$/.test(s))throw Error('กรุณาระบุเลขสาขา 1–5 หลัก');return s.padStart(5,'0');};
  const label=(code,name)=>code==null||code===''?'ยังไม่ระบุสำนักงาน / สาขา':code==='00000'?'สำนักงานใหญ่':'สาขา '+[String(name??'').trim(),code].filter(Boolean).join(' · ');
  const readName=(data,prefix='office')=>{if(data[prefix+'Type']===undefined)return undefined;if(data[prefix+'Type']!=='branch')return null;const name=String(data[prefix+'Name']??'').trim();if(name.length>120)throw Error('ชื่อสาขาต้องไม่เกิน 120 ตัวอักษร');return name||null;};
- const read=(data,prefix='office')=>{
+ const read=(data,prefix='office',{optional=false}={})=>{
   const type=data[prefix+'Type'];if(type===undefined)return undefined;
+  if(optional&&type==='')return null;
   if(type==='head')return '00000';
   if(type!=='branch')throw Error('กรุณาเลือกสำนักงานใหญ่หรือสาขา');
   const code=normalize(data[prefix+'Number']);if(code==='00000')throw Error('เลข 00000 ให้เลือกสำนักงานใหญ่');return code;
  };
- const mount=(root,code,{prefix='office',title='สำนักงาน / สาขา',before,name=''}={})=>{
+ const mount=(root,code,{prefix='office',title='สำนักงาน / สาขา',before,name='',optional=false}={})=>{
   const box=document.createElement('div');box.className='field';box.style.cssText='margin:14px 0;display:grid;gap:8px';
-  const select=document.createElement('select');select.name=prefix+'Type';select.required=true;select.setAttribute('aria-label',title);
-  for(const [value,text] of [['','กรุณาเลือก'],['head','สำนักงานใหญ่'],['branch','สาขา']]){const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option);}
+  const select=document.createElement('select');select.name=prefix+'Type';select.required=!optional;select.setAttribute('aria-label',title);
+  for(const [value,text] of [['',optional?'ไม่ระบุสำนักงาน / สาขา':'กรุณาเลือก'],['head','สำนักงานใหญ่'],['branch','สาขา']]){const option=document.createElement('option');option.value=value;option.textContent=text;select.append(option);}
   const heading=document.createElement('label');heading.textContent=title;heading.append(select);
   const number=document.createElement('input');number.name=prefix+'Number';number.inputMode='numeric';number.maxLength=5;number.pattern='[0-9]{1,5}';number.placeholder='เลขสาขา เช่น 00001';number.setAttribute('aria-label',title+' — เลขสาขา');
   const branchName=document.createElement('input');branchName.name=prefix+'Name';branchName.maxLength=120;branchName.placeholder='ชื่อสาขา เช่น บางนา';branchName.setAttribute('aria-label',title+' — ชื่อสาขา');branchName.value=name||'';
