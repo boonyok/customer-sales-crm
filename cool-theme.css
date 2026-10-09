@@ -59,6 +59,22 @@
   .app-shell .stat-icon.mint,.app-shell .stat-icon.violet,.app-shell .stat-icon.sky{background:#e0f2ff;color:#087fac}
   .app-shell .bars i{background:#64b5e4}.app-shell .bars i:nth-child(6),.app-shell .bars i:nth-child(7),.app-shell .bars i:nth-child(9){background:#0c91c4}
   .app-shell .empty-icon{color:#2b9bd0}
+  /* Dashboard widgets inject their own legacy green styles after this file.
+     Scope through app-shell so the shared blue theme wins without !important. */
+  .app-shell #dashboard .bo-hero{background:linear-gradient(115deg,#087fac,#3ba6d9);box-shadow:0 12px 30px #087fac1a}
+  .app-shell #dashboard .bo-mark{border-color:#d5f1ff80;background:#ffffff14;color:#fff}
+  .app-shell #dashboard .bo-hero p{color:#e1f4ff}
+  .app-shell #dashboard .bo-metric,.app-shell #dashboard .bo-card,.app-shell #dashboard .bo-link{border-color:#d7e8f5;box-shadow:0 4px 20px #388dc508}
+  .app-shell #dashboard .bo-metric p,.app-shell #dashboard .bo-muted,.app-shell #dashboard .bo-link span{color:#62809a}
+  .app-shell #dashboard .bo-metric small,.app-shell #dashboard .bo-task small{color:#728da3}
+  .app-shell #dashboard .bo-link b{color:#087fac}
+  .app-shell #dashboard .bo-link:hover{background:#f3faff;border-color:#80c5e8}
+  .app-shell #dashboard .bo-chart,.app-shell #dashboard .bo-task{border-color:#e1edf7}
+  .app-shell #dashboard .bo-bar i{background:#80c6ed}
+  .app-shell #dashboard .bo-bar:last-child i{background:#0c91c4}
+  .app-shell #dashboard .bo-bar span,.app-shell #dashboard .bo-status{color:#507795}
+  .app-shell #dashboard .bo-bar small,.app-shell #dashboard .bo-empty{color:#728da3}
+  .app-shell #dashboard .bo-pill{background:#e0f2ff;color:#087fac}
   dialog::backdrop{background:#123e6659}
   dialog .form-content,dialog .product-form{background:linear-gradient(180deg,#fff,#f3f9ff);color:#163b57}
   dialog .field input,dialog .field select,dialog .product-form input,dialog .product-form select,dialog .product-form textarea{border-color:#bfdcef}
