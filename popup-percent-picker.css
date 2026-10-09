@@ -1,9 +1,15 @@
 @media screen {
-  dialog .field > select.popup-percent-choice {
-    box-sizing: border-box; display: block; width: 100%; min-height: 44px;
-    margin: 6px 0 0; padding: 10px 12px;
-    border: 1px solid #bdd8e9; border-radius: 10px;
-    background: #f2f9fe; color: #185d80; font: inherit;
+  dialog .field > .popup-percent-buttons {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0;
   }
-  dialog .popup-percent-choice:focus-visible { outline: 3px solid #1598c51c; border-color: #1598c5; }
+  dialog .popup-percent-buttons button {
+    min-width: 47px; min-height: 34px; padding: 6px 9px;
+    border: 1px solid #bdd8e9; border-radius: 7px;
+    background: #f2f9fe; color: #185d80; font: 500 12px/1.4 'IBM Plex Sans Thai',sans-serif;
+    cursor: pointer;
+  }
+  dialog .popup-percent-buttons button[aria-pressed="true"] { background: #087fac; border-color: #087fac; color: white; }
+  dialog .popup-percent-buttons button:hover:not(:disabled) { border-color: #1598c5; box-shadow: 0 0 0 2px #1598c51c; }
+  dialog .popup-percent-buttons button:focus-visible { outline: 3px solid #1598c550; outline-offset: 2px; }
+  dialog .popup-percent-buttons button:disabled { opacity: .5; cursor: default; }
 }

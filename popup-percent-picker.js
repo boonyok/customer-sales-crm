@@ -8,30 +8,41 @@
       const field = input.closest('.field');
       const label = field?.querySelector('span')?.textContent || '';
       if (!field || !label.includes('%')) return;
-      let select = controls.get(input);
-      if (!select) {
-        select = document.createElement('select');
-        select.className = 'popup-percent-choice';
-        select.setAttribute('aria-label', 'เลือก ' + label + ' ทีละ 5%');
-        select.innerHTML = '<option value="">กำหนดเปอร์เซ็นต์เอง</option>' + steps.map(value => `<option value="${value}">${value}%</option>`).join('');
-        select.addEventListener('change', () => {
-          if (input.disabled || input.readOnly || select.value === '') return;
-          input.value = select.value;
-          input.dispatchEvent(new Event('input', {bubbles:true}));
-          input.dispatchEvent(new Event('change', {bubbles:true}));
+      let group = controls.get(input);
+      if (!group) {
+        group = document.createElement('div');
+        group.className = 'popup-percent-buttons';
+        group.setAttribute('role', 'group');
+        group.setAttribute('aria-label', 'เลือก ' + label + ' ทีละ 5%');
+        input.setAttribute('aria-label', label);
+        steps.forEach(value => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.dataset.percent = String(value);
+          button.textContent = value + '%';
+          button.setAttribute('aria-label', label + ' ' + value + '%');
+          button.addEventListener('click', () => {
+            if (input.disabled || input.readOnly) return;
+            input.value = String(value);
+            input.dispatchEvent(new Event('input', {bubbles:true}));
+            input.dispatchEvent(new Event('change', {bubbles:true}));
+          });
+          group.append(button);
         });
-        input.after(select);
-        input.addEventListener('input', () => sync(input, select));
-        input.addEventListener('change', () => sync(input, select));
-        controls.set(input, select);
+        input.after(group);
+        input.addEventListener('input', () => sync(input, group));
+        input.addEventListener('change', () => sync(input, group));
+        controls.set(input, group);
       }
-      sync(input, select);
+      sync(input, group);
     });
   }
-  function sync(input, select) {
+  function sync(input, group) {
     const value = input.value === '' ? NaN : Number(input.value);
-    select.value = steps.includes(value) ? String(value) : '';
-    select.disabled = input.disabled || input.readOnly;
+    group.querySelectorAll('button').forEach(button => {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.percent) === value));
+      button.disabled = input.disabled || input.readOnly;
+    });
   }
   function schedule() { if (!queued) { queued = true; requestAnimationFrame(scan); } }
   new MutationObserver(schedule).observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['disabled','readonly']});
