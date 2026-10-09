@@ -29,7 +29,7 @@
           });
           group.append(button);
         });
-        input.after(group);
+        field.after(group);
         input.addEventListener('input', () => sync(input, group));
         input.addEventListener('change', () => sync(input, group));
         controls.set(input, group);

@@ -1,6 +1,7 @@
 @media screen {
-  dialog .field > .popup-percent-buttons {
+  dialog .popup-percent-buttons {
     display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0;
+    grid-column: 1 / -1; flex-basis: 100%; width: 100%; min-width: 0;
   }
   dialog .popup-percent-buttons button {
     min-width: 47px; min-height: 34px; padding: 6px 9px;
