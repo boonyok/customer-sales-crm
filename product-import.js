@@ -1,5 +1,20 @@
 (() => {
-  let context,busy=false,button;
+  let context,busy=false,button,renameButton;
+  async function correctNames(c){
+    const org=c.currentOrg(),wrong='แบติดบานพับ',right='แบบติดบานพับ';let total=0;
+    const guard=()=>{if(c.currentOrg()!==org)throw Error('บริษัทเปลี่ยน หยุดแก้ไข');};
+    while(true){
+      guard();const scope='/rest/v1/products?organization_id=eq.'+encodeURIComponent(org);
+      const rows=await c.request(scope+'&name=like.'+encodeURIComponent('*'+wrong+'*')+'&select=id,name&order=id.asc&limit=100');
+      if(!rows.length)return total;
+      const groups=new Map();for(const row of rows){if(!/^[0-9a-f-]{36}$/i.test(row.id))throw Error('รหัสสินค้าไม่ถูกต้อง');const group=groups.get(row.name)||[];group.push(row.id);groups.set(row.name,group);}
+      for(const [name,ids] of groups){
+        guard();const saved=await c.request(scope+'&id=in.('+ids.join(',')+')&name=eq.'+encodeURIComponent(name),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({name:name.replaceAll(wrong,right)})});
+        if(saved.length!==ids.length)throw Error('จำนวนชื่อที่แก้ไขไม่ครบ กรุณาลองอีกครั้ง');total+=saved.length;
+      }
+      c.notice('แก้ชื่อสินค้าแล้ว '+total.toLocaleString('th-TH')+' รายการ');
+    }
+  }
   function validate(rows){
     if(!Array.isArray(rows)||!rows.length||rows.length>50000)throw Error('จำนวนรายการต้องเป็น 1–50,000');
     const codes=new Set();
@@ -29,15 +44,21 @@
     }
     return {added,skipped,total:rows.length};
   }
-  function configure(c){context=c;if(button){button.hidden=window.CRMAccess?.role!=='admin';return;}
+  function configure(c){context=c;if(button){button.hidden=renameButton.hidden=window.CRMAccess?.role!=='admin';return;}
     const input=document.createElement('input');input.type='file';input.accept='.json';input.hidden=true;document.body.append(input);
     button=document.createElement('button');button.type='button';button.className='ghost';button.textContent='นำเข้าข้อมูลสินค้า (JSON)';document.getElementById('add-product').before(button);button.hidden=window.CRMAccess?.role!=='admin';
     button.onclick=()=>{if(!busy)input.click();};
-    input.onchange=async()=>{const file=input.files?.[0];if(!file||busy)return;busy=true;button.disabled=true;const c=context;
+    renameButton=document.createElement('button');renameButton.type='button';renameButton.className='ghost';renameButton.textContent='แก้คำผิดชื่อสินค้า';button.after(renameButton);renameButton.hidden=button.hidden;
+    renameButton.onclick=async()=>{if(busy||!confirm('แก้ชื่อสินค้า “แบติดบานพับ” เป็น “แบบติดบานพับ” ทุกขนาด โดยคงรหัส ขนาด และราคาเดิมไว้?'))return;busy=true;button.disabled=renameButton.disabled=true;const c=context;
+      try{const count=await correctNames(c);await c.refresh();c.notice('แก้ชื่อสินค้าเรียบร้อย '+count.toLocaleString('th-TH')+' รายการ • คงรหัส ขนาด และราคาเดิม');}
+      catch(error){c.notice('แก้ชื่อไม่สำเร็จ: '+error.message+' • สามารถกดทำต่อได้โดยไม่แก้ซ้ำ');}
+      finally{busy=false;button.disabled=renameButton.disabled=false;}
+    };
+    input.onchange=async()=>{const file=input.files?.[0];if(!file||busy)return;busy=true;button.disabled=renameButton.disabled=true;const c=context;
       try{const rows=JSON.parse(await file.text()),result=await run(rows,c);await c.refresh();c.notice('นำเข้าสำเร็จ '+result.total.toLocaleString('th-TH')+' รายการ • เพิ่ม '+result.added.toLocaleString('th-TH')+' • ข้ามรายการเดิม '+result.skipped.toLocaleString('th-TH'));}
       catch(error){c.notice('หยุดนำเข้า: '+error.message+' • รายการที่เพิ่มสำเร็จแล้วจะยังอยู่ สามารถนำเข้าไฟล์เดิมอีกครั้งได้');}
-      finally{busy=false;button.disabled=false;input.value='';}
+      finally{busy=false;button.disabled=renameButton.disabled=false;input.value='';}
     };
   }
-  window.ProductImport={configure,run,validate};
+  window.ProductImport={configure,run,validate,correctNames};
 })();
