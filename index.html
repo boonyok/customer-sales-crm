@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="document-overview.css?v=4" />
     <link rel="stylesheet" href="data-workspaces.css?v=1" />
   <link rel="stylesheet" href="document-form-sections.css?v=2">
+  <link rel="stylesheet" href="popup-percent-picker.css?v=1">
   </head>
   <body>
     <div class="app-shell">
@@ -46,7 +47,7 @@
       <main>
         <header><div><p class="eyebrow" id="breadcrumb">ภาพรวม</p><h1 id="page-title">ภาพรวมบริษัท บุญยก ซัพพลาย จำกัด</h1></div><div class="header-actions"><button class="icon-button" aria-label="การแจ้งเตือน">♢</button><button class="primary" id="new-action">+ สร้างใบเสนอราคา</button></div></header>
         <section id="dashboard" class="page active-page"><p role="status">กำลังโหลดภาพรวมบริษัท…</p></section>
-        <section id="customers" class="page"><div class="page-toolbar"><div class="search">⌕ <input id="customer-search" placeholder="ค้นหาชื่อ, บริษัท, เลขผู้เสียภาษี" /></div><button class="primary" id="add-customer">+ เพิ่มลูกค้า</button></div><article class="panel table-panel"><div class="panel-title"><div><h3>ลูกค้าทั้งหมด</h3><p id="customer-count">0 ราย</p></div><button class="ghost">กรอง ⌄</button></div><table><thead><tr><th>ลูกค้า</th><th>เลขผู้เสียภาษี</th><th>โทรศัพท์</th><th>เครดิตเทอม</th><th>ยอดขายสะสม</th><th></th></tr></thead><tbody id="customer-body"></tbody></table></article></section>
+        <section id="customers" class="page"><div class="page-toolbar"><div class="search">⌕ <input id="customer-search" placeholder="ค้นหาชื่อ, บริษัท, เลขผู้เสียภาษี" /></div><button class="primary" id="add-customer">+ เพิ่มลูกค้า</button></div><article class="panel table-panel"><div class="panel-title"><div><h3>ลูกค้าทั้งหมด</h3><p id="customer-count">0 ราย</p></div><button class="ghost">กรอง ⌄</button></div><table><thead><tr><th>ลูกค้า</th><th>เลขผู้เสียภาษี</th><th>โทรศัพท์</th><th>ส่วนลด (%)</th><th>เครดิตเทอม</th><th>ยอดขายสะสม</th><th></th></tr></thead><tbody id="customer-body"></tbody></table></article></section>
         <section id="products" class="page"><div class="page-toolbar"><div class="search">⌕ <input id="product-search" placeholder="ค้นหาสินค้าหรือรหัสสินค้า" /></div><button class="primary" id="add-product">+ เพิ่มสินค้า</button></div><article class="panel table-panel"><div class="panel-title"><div><h3>สินค้าและขนาด</h3><p>ราคาแสดงก่อน VAT</p></div><button class="ghost">หมวดสินค้าทั้งหมด ⌄</button></div><table><thead><tr><th>รหัสสินค้า</th><th>รายการสินค้า</th><th>ขนาด / สเปก</th><th>ราคาขาย</th><th>สถานะ</th><th></th></tr></thead><tbody id="product-body"></tbody></table></article></section>
         <section id="quotations" class="page"><div class="page-toolbar"><div class="tabs"><button class="tab active">ทั้งหมด</button><button class="tab">ร่าง</button><button class="tab">รออนุมัติ</button><button class="tab">อนุมัติแล้ว</button></div><button class="primary" id="add-quotation">+ สร้างใบเสนอราคา</button></div><article class="panel table-panel"><div class="panel-title"><div><h3>ใบเสนอราคา</h3><p>จัดการเอกสารเสนอราคาทั้งหมด</p></div><div class="search small">⌕ <input placeholder="ค้นหาเอกสาร" /></div></div><table><thead><tr><th>เลขที่เอกสาร</th><th>ลูกค้า</th><th>วันที่ออก</th><th>หมดอายุ</th><th>ยอดรวม</th><th>สถานะ</th><th></th></tr></thead><tbody id="quotation-body"></tbody></table></article></section>
         <section id="invoices" class="page"><div class="empty-state"><div class="empty-icon">▤</div><h2>ใบวางบิลจะอยู่ที่นี่</h2><p>เมื่อใบเสนอราคาได้รับการอนุมัติ คุณจะสร้างใบวางบิลและติดตามการชำระเงินได้จากหน้านี้</p><button class="primary" data-page-go="quotations">ไปที่ใบเสนอราคา</button></div></section>
@@ -79,7 +80,7 @@
     })();
     </script>
     <script src="supabase-config.js"></script>
-    <script src="app.js?v=quotation-status-colors-2"></script>
+    <script src="app.js?v=customer-discount-column-1"></script>
     <script src="product-unit-converter.js?v=cm-divide-2_5-round-integer-1"></script>
     <script src="quotation-filters.js?v=tax-status-1"></script>
     <script src="product-code-picker.js?v=tax-fast-1"></script>
@@ -129,6 +130,7 @@
     <script src="tax-output-actions.js?v=1"></script>
   <script src="workspace-sidebar.js?v=6"></script>
   <script src="document-overview.js?v=3"></script>
-  <script src="data-workspaces.js?v=1"></script>
+  <script src="data-workspaces.js?v=2"></script>
+  <script src="popup-percent-picker.js?v=1"></script>
   </body>
 </html>

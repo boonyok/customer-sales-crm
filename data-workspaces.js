@@ -17,7 +17,8 @@
     }
     const rows = [...(document.getElementById('customer-body')?.rows || [])].filter(row => row.cells.length > 1 && !row.hidden);
     const total = document.getElementById('customer-count')?.textContent || '0 ราย';
-    const cash = rows.filter(row => /เงินสด|^0\s*(?:วัน|days?)?$/i.test(row.cells[3]?.textContent.trim() || '')).length;
+    const termsIndex = [...(page.querySelector('thead tr')?.cells || [])].findIndex(cell => cell.textContent.trim() === 'เครดิตเทอม');
+    const cash = rows.filter(row => /เงินสด|^0\s*(?:วัน|days?)?$/i.test(row.cells[termsIndex]?.textContent.trim() || '')).length;
     for (const [selector, value] of [['[data-customer-total]', total], ['[data-customer-visible]', nf.format(rows.length)], ['[data-customer-cash]', nf.format(cash)]]) {
       const el = overview.querySelector(selector);
       if (el.textContent !== value) el.textContent = value;
