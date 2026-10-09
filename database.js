@@ -307,6 +307,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
   const syncAll = async () => {
     await loadOrganization();
     await window.CRMAccess.configure(request,orgId);
+    window.ProductBulkDelete?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,prepare:async()=>{if(catalogLoad)await catalogLoad.catch(()=>{});},refresh:async()=>{catalogReadyOrg=null;lastDeletedProduct=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     if(window.CRMAccess.role==='customer'){
       state.customers=[];state.quotations=[];state.invoices=[];
       productsOrganizationReady=true;render();loadVisibleProducts();return;
@@ -768,7 +769,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     let starting=false;
     const start=async()=>{
       if(starting)return;starting=true;initialLoading=true;label();startupNotice.hidden=false;startupNotice.textContent='กำลังโหลดข้อมูลเอกสาร… สินค้าจะโหลดเมื่อเปิดใช้งาน';
-      try{await syncAll();await importVDFlangeCatalog();await importOBVCatalog();startupNotice.hidden=true;}
+      try{await syncAll();startupNotice.hidden=true;}
       catch(error){
         if(error.status===401){session=null;localStorage.removeItem('flowbill-session');localStorage.removeItem('flowbill-org-id');login();}
         else{startupNotice.textContent='โหลดข้อมูลเอกสารไม่สำเร็จ: '+error.message+' ';const retry=document.createElement('button');retry.type='button';retry.className='ghost';retry.textContent='ลองใหม่';retry.onclick=start;startupNotice.append(retry);}
