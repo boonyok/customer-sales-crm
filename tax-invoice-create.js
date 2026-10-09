@@ -58,6 +58,10 @@
       const numberingNotice=root.querySelector('h2').nextElementSibling;
       const due=root.querySelector('[name=expires]');due.name='dueDate';due.required=false;due.previousElementSibling.textContent='ครบกำหนดชำระ (ว่าง = วันที่เอกสาร)';
       const date=document.createElement('label');date.className='field';date.innerHTML=`<span>วันที่เอกสาร</span><input name="issueDate" type="date" min="2000-01-01" max="2199-12-31" required value="${window.QuotationEditor.issueDate()}">`;root.querySelector('.qe-grid').prepend(date);
+      root.querySelector('[name=validityMonths]').closest('label').remove();
+      const terms=root.querySelector('[name=paymentTerms]'),issue=date.querySelector('input');
+      const updateDue=()=>{if(!issue.value)return;const days=Number(terms.value.match(/^(7|15|30|45) Days$/)?.[1]||0);const value=new Date(`${issue.value}T00:00:00Z`);value.setUTCDate(value.getUTCDate()+days);due.value=value.toISOString().slice(0,10);};
+      terms.addEventListener('change',updateDue);issue.addEventListener('change',updateDue);updateDue();
       const updateNumber=()=>{numberingNotice.textContent=`ตัวอย่างรูปแบบ ${numberExample(date.querySelector('input').value)} • รันต่อจากเลขลำดับสูงสุดของปี พ.ศ. • กำหนดเลขจริงเมื่อบันทึก • เริ่มต้นค้างจ่าย`;};date.querySelector('input').addEventListener('input',updateNumber);updateNumber();
       root.querySelector('[name=deliveryTerms]').closest('label').remove();root.querySelector('[name=notes]').maxLength=4000;
       const submit=root.querySelector('button[value=default]');submit.textContent='บันทึกใบกำกับภาษี';
