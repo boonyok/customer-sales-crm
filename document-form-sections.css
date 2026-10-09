@@ -1,0 +1,35 @@
+@media screen {
+  dialog .document-form-section {
+    min-width: 0;
+    margin: 24px 0;
+    padding: 22px;
+    border: 1px solid #c8e2f2;
+    border-radius: 14px;
+    background: #fff;
+  }
+  dialog .document-header-section { background: #f5faff; }
+  dialog .document-items-section {
+    margin-top: 30px;
+    border-top: 4px solid #1598c5;
+    box-shadow: 0 4px 16px #13749c0a;
+  }
+  dialog .document-form-section > h3 {
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #d6e9f5;
+    font-size: 18px;
+    line-height: 1.5;
+    color: #126387;
+  }
+  dialog .document-form-section > p { line-height: 1.7; }
+  dialog .document-items-section .qe-row,
+  dialog .document-items-section .dn-line {
+    margin-top: 14px;
+    border-color: #d1e5f0;
+    background: #f8fbfe;
+  }
+  dialog .document-items-section .qe-bottom { margin-top: 12px; }
+  @media (max-width: 650px) {
+    dialog .document-form-section { padding: 16px; margin: 20px 0; }
+  }
+}

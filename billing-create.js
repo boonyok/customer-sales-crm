@@ -9,10 +9,13 @@
   const ask=(request,org,invoice,onSaved)=>{
     if(document.querySelector('#billing-create-dialog'))return;
     const dialog=document.createElement('dialog');dialog.id='billing-create-dialog';dialog.style.cssText='width:min(520px,calc(100% - 32px));padding:26px;border:0;border-radius:14px';
-    dialog.innerHTML='<form><h2>ออกใบวางบิล</h2><p data-source></p><p>เชื่อมใบกำกับภาษีนี้ 1 ใบ และใช้ยอดเงินจากเอกสารต้นทาง</p><label class="field"><span>วันที่ใบวางบิล</span><input name="date" type="date" required></label><label class="field"><span>เครดิต (วัน) — 0 คือชำระทันที</span><input name="credit" type="number" min="0" max="3650" step="1" required placeholder="ระบุจำนวนวัน"></label><p role="alert" data-error></p><div class="form-actions"><button class="ghost" type="button" data-cancel>ยกเลิก</button><button class="primary" type="submit">ยืนยันออกใบวางบิล</button></div></form>';
+    dialog.innerHTML='<form><h2>ออกใบวางบิล</h2><section class="document-form-section document-items-section" aria-label="เอกสารและยอดเงินต้นทาง"><h3>เอกสารและยอดเงินต้นทาง</h3><p data-source></p><p>เชื่อมใบกำกับภาษีนี้ 1 ใบ และใช้ยอดเงินจากเอกสารต้นทาง</p></section><section class="document-form-section document-header-section" aria-label="ข้อมูลหัวบิล"><h3>ข้อมูลหัวบิล</h3><label class="field"><span>วันที่ใบวางบิล</span><input name="date" type="date" required></label><label class="field"><span>เงื่อนไขชำระเงิน</span><select name="credit" required><option value="0" selected>เงินสด</option><option value="7">7 Days</option><option value="15">15 Days</option><option value="30">30 Days</option><option value="45">45 Days</option></select></label></section><p role="alert" data-error></p><div class="form-actions"><button class="ghost" type="button" data-cancel>ยกเลิก</button><button class="primary" type="submit">ยืนยันออกใบวางบิล</button></div></form>';
     dialog.querySelector('[data-source]').textContent=`${invoice.document_number} • ${invoice.customer_name_snapshot}`;
     const form=dialog.querySelector('form'),cancel=dialog.querySelector('[data-cancel]'),submit=dialog.querySelector('[type=submit]'),error=dialog.querySelector('[data-error]');
     window.DocumentNumber.mount(form);
+    const header=dialog.querySelector('.document-header-section'),items=dialog.querySelector('.document-items-section');
+    header.after(items);
+    const numberField=form.querySelector('[name=manualDocumentNumber]')?.closest('label');if(numberField)header.querySelector('h3').after(numberField);
     form.elements.date.value=window.QuotationEditor.issueDate();let busy=false;
     const close=()=>{dialog.close();dialog.remove();};cancel.onclick=close;dialog.addEventListener('cancel',e=>{e.preventDefault();if(!busy)close();});
     form.onsubmit=async e=>{
