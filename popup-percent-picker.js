@@ -15,6 +15,8 @@
         group.setAttribute('role', 'group');
         group.setAttribute('aria-label', 'เลือก ' + label + ' ทีละ 5%');
         input.setAttribute('aria-label', label);
+        const rows = [document.createElement('div'), document.createElement('div')];
+        rows.forEach(row => { row.className = 'popup-percent-row'; group.append(row); });
         steps.forEach(value => {
           const button = document.createElement('button');
           button.type = 'button';
@@ -27,7 +29,7 @@
             input.dispatchEvent(new Event('input', {bubbles:true}));
             input.dispatchEvent(new Event('change', {bubbles:true}));
           });
-          group.append(button);
+          rows[value <= 50 ? 0 : 1].append(button);
         });
         field.after(group);
         input.addEventListener('input', () => sync(input, group));
