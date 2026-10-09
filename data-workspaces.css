@@ -1,0 +1,31 @@
+@media screen {
+  .data-workspace .page-toolbar { margin: 0 0 20px; align-items: center; }
+  .data-workspace .page-toolbar .search { flex: 1; min-width: 220px; background: #fff; border: 1px solid #c8e2f2; }
+  .data-workspace .panel-title { margin-bottom: 20px; }
+  .data-workspace .panel-title h3,
+  .data-workspace .cp-card > h3,
+  .data-workspace .settings-card > h3 { color: #185d80; font-size: 18px; margin: 0 0 10px; }
+  .data-workspace .table-panel { overflow-x: auto; }
+  .data-workspace table { width: 100%; }
+  .data-workspace th { color: #54809b; font-size: 12px; white-space: nowrap; }
+  .data-workspace td { border-bottom-color: #e1edf6; }
+  .data-workspace tbody tr:hover { background: #f2faff; }
+  #company-profile.data-workspace .cp-grid { gap: 22px; align-items: start; }
+  #company-profile.data-workspace .cp-card { padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px #217aaa06; }
+  #company-profile.data-workspace .cp-card > h3 { padding-bottom: 14px; border-bottom: 1px solid #dcecf7; }
+  #company-profile.data-workspace .cp-note { color: #63839a; }
+  #company-profile.data-workspace .cp-image { background: #f2f9fe; border: 1px solid #d7eaf7; }
+  .app-shell #company-profile.data-workspace :is(input:not([type=file]), textarea, select),
+  .app-shell #sales-tax.data-workspace :is(input, select) { box-sizing: border-box; min-height: 46px; padding: 11px 13px; border: 1px solid #bfdbea; border-radius: 10px; background: #fff; color: #184566; font: inherit; }
+  .app-shell #sales-tax.data-workspace .field { display: flex; flex-direction: column; gap: 8px; min-width: 220px; flex: 1; margin: 12px 0; }
+  .app-shell #sales-tax.data-workspace .field > span { display: block; font-size: 13px; color: #42657e; }
+  .data-workspace :is(input, textarea, select):focus-visible { outline: 3px solid #1598c51c; border-color: #1598c5 !important; }
+  #sales-tax.data-workspace [data-summary] { padding: 16px; background: #edf7ff; border: 1px solid #cce4f6; border-radius: 12px; color: #185d80; }
+  #sales-tax.data-workspace tfoot { background: #edf7ff; }
+  #purchase-tax.data-workspace .settings-card { border-left: 4px solid #1598c5; }
+  @media (max-width: 650px) {
+    .data-workspace .panel, #company-profile.data-workspace .cp-card { padding: 16px; }
+    .data-workspace .page-toolbar .search { min-width: 0; width: 100%; flex-basis: 100%; }
+    #company-profile.data-workspace .cp-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+}
