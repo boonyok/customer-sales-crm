@@ -1,5 +1,5 @@
 (() => {
-  const categories = [['all','สินค้าทั้งหมด'],['Supply Air','Supply Air Register'],['Square Ceiling','Square Ceiling Diffuser'],['Linear Slot','Linear Slot Diffuser'],['Return Air','Return Air Grille'],['Linear Bar','Linear Bar Grille'],['Exhaust Air','Exhaust Air Grille'],['Volume Damper','Volume Damper'],['Swirl','Swirl Air Diffuser'],['Filter','Air Filter'],['Round Ceiling','Round Ceiling Diffuser']];
+  const categories = [['Return Air','Return Air Grille'],['Exhaust Air','Exhaust Air Grille'],['Supply Air','Supply Air Register'],['Square Ceiling','Square Ceiling Diffuser'],['Round Ceiling','Round Ceiling Diffuser'],['Linear Slot','Linear Slot Diffuser'],['Linear Bar','Linear Bar Grille'],['Volume Damper','Volume Damper']];
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const page = document.getElementById('products');
   const data = document.createElement('section'); data.id='product-data';data.className='page document-workspace data-workspace';
@@ -14,6 +14,7 @@
   let context,category='all',generation=0;
   const form=page.querySelector('form'),status=page.querySelector('#price-status'),results=page.querySelector('#price-results');
   function choose(key){category=key;page.querySelectorAll('[data-category]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===key)));}
+  choose('all');
   page.querySelectorAll('[data-category]').forEach(b=>b.onclick=()=>{choose(b.dataset.category);search();});
   form.onreset=()=>{generation++;choose('all');status.textContent='เลือกประเภทหรือกรอกคำค้นหา แล้วกดค้นหาราคา';results.replaceChildren();};
   form.onsubmit=e=>{e.preventDefault();search();};
