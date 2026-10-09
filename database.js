@@ -301,12 +301,14 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>à
   };
   let productsOrganizationReady=false;
   const loadVisibleProducts=()=>{
-    if(session&&productsOrganizationReady&&document.querySelector('#products').classList.contains('active-page'))ensureProducts().catch(()=>{});
+    if(session&&productsOrganizationReady&&['products','product-data'].some(id=>document.getElementById(id)?.classList.contains('active-page')))ensureProducts().catch(()=>{});
   };
   new MutationObserver(loadVisibleProducts).observe(document.querySelector('#products'),{attributes:true,attributeFilter:['class']});
+  new MutationObserver(loadVisibleProducts).observe(document.querySelector('#product-data'),{attributes:true,attributeFilter:['class']});
   const syncAll = async () => {
     await loadOrganization();
     await window.CRMAccess.configure(request,orgId);
+    window.PriceList?.configure({prepare:ensureProducts,products:()=>state.products});
     window.ProductBulkDelete?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,prepare:async()=>{if(catalogLoad)await catalogLoad.catch(()=>{});},refresh:async()=>{catalogReadyOrg=null;lastDeletedProduct=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     if(window.CRMAccess.role==='customer'){
       state.customers=[];state.quotations=[];state.invoices=[];

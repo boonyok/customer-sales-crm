@@ -1,6 +1,7 @@
 (() => {
   const style=document.createElement('style');style.textContent='[data-access-hidden="true"]{display:none!important}';document.head.append(style);
   const pages={dashboard:'dashboard',customers:'customers',products:'products',quotations:'quotation',invoices:'billing_note',billing:'billing_note','tax-invoices':'tax_invoice','tax-invoice-control':'tax_invoice','tax-invoice-trash':'tax_invoice','delivery-notes':'delivery_note','cash-bills':'cash_bill','company-profile':'company',members:'members',settings:'settings'};
+  pages['product-data']='products';
   let role=null,permissions={},observer;
   const can=(resource,action='view')=>role==='admin'||permissions[resource]?.[action]===true;
   const pageAllowed=page=>can(pages[page]||page);

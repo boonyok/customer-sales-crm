@@ -5,7 +5,7 @@
   const groups = [
     ['overview','ภาพรวม','▦'], ['sales','งานขาย','<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><path d="M9 7 7 3h10l-2 4M8 7h8M8 8c-2 3-5 6-5 9a4 4 0 0 0 4 4h10a4 4 0 0 0 4-4c0-3-3-6-5-9"/><path d="M12 11v7m2-5c-.5-1-4-1.4-4 .5 0 2 4 1 4 3 0 1.9-3.5 1.5-4 .5"/></svg>'], ['data','ข้อมูล','▥'], ['tools','งานบัญชี','<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:auto"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 6h8v4H8zM8 14h1M12 14h1M16 14h0M8 18h1M12 18h1M16 18h0"/></svg>'], ['settings','ตั้งค่า','⚙']
   ];
-  const groupFor = page => page === 'dashboard' ? 'overview' : ['quotations','tax-invoices','tax-invoice-control','delivery-notes','invoices','billing','cash-bills'].includes(page) ? 'sales' : ['customers','products','company-profile'].includes(page) ? 'data' : ['members','settings'].includes(page) ? 'settings' : 'tools';
+  const groupFor = page => page === 'dashboard' ? 'overview' : ['quotations','tax-invoices','tax-invoice-control','delivery-notes','invoices','billing','cash-bills'].includes(page) ? 'sales' : ['customers','products','product-data','company-profile'].includes(page) ? 'data' : ['members','settings'].includes(page) ? 'settings' : 'tools';
   const brand = sidebar.querySelector('.brand');
   brand.innerHTML = '<span class="by-brand-mark">BY</span><span><strong>BOONYOK</strong><small>SUPPLY CO., LTD.</small></span>';
   const rail = document.createElement('div'); rail.className = 'by-rail'; rail.setAttribute('aria-label','หมวดเมนูหลัก');
