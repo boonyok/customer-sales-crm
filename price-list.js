@@ -19,8 +19,9 @@
   form.onreset=()=>{generation++;choose('all');status.textContent='เลือกประเภทหรือกรอกคำค้นหา แล้วกดค้นหาราคา';results.replaceChildren();};
   form.onsubmit=e=>{e.preventDefault();search();};
   const match = (p,f,category) => {
-    const text=[p.sku,p.name,p.size].join(' ').toLowerCase();
-    if(f.query&&!text.includes(f.query.trim().toLowerCase()))return false;
+    const normalize=value=>String(value??'').toLowerCase().replace(/[×✕]/g,'x').replace(/\s*x\s*/g,'x');
+    const text=normalize([p.sku,p.name,p.size].join(' '));
+    if(f.query&&!normalize(f.query).trim().split(/\s+/).every(word=>text.includes(word)))return false;
     if(category!=='all'&&!String(p.name).toLowerCase().includes(category.toLowerCase()))return false;
     const patterns={aluminium:/alumini?um|อลูมิเนียม/,white:/white|สีขาว/,black:/black|สีดำ/};
     if(f.color&&!patterns[f.color].test(text))return false;
