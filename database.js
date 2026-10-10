@@ -36,9 +36,12 @@
   let companyVatRate = 7;
   const headers = () => ({ apikey: config.publishableKey, Authorization: `Bearer ${session?.access_token || config.publishableKey}`, 'Content-Type': 'application/json' });
   const request = async (path, options = {}) => {
+    session=await window.CRMSession.ensure();
     ({path,options}=window.PermissionTransport.route(path,options,orgId));
     const {responseType,...fetchOptions}=options;
-    const response = await fetch(config.url + path, { ...fetchOptions, headers: { ...headers(), ...(options.headers || {}) } });
+    const send=()=>fetch(config.url + path, { ...fetchOptions, headers: { ...headers(), ...(options.headers || {}) } });
+    let response=await send();
+    if(response.status===401&&session?.refresh_token){session=await window.CRMSession.ensure(true);if(session)response=await send();}
     if(response.ok&&responseType==='blob')return response.blob();
     const body = await response.text();
     if (!response.ok) { const detail = JSON.parse(body || '{}'); const error=new Error(detail.message || detail.hint || 'เชื่อมต่อฐานข้อมูลไม่สำเร็จ'); error.code=detail.code; error.status=response.status; throw error; }
