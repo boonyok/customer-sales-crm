@@ -171,7 +171,6 @@
   });
   const productTrashButton=document.createElement('button');
   productTrashButton.type='button';productTrashButton.className='ghost';productTrashButton.textContent='ถังขยะ (0)';productTrashButton.style.marginLeft='auto';
-  document.querySelector('#add-product').before(productTrashButton);
   const productTrashDialog=document.createElement('dialog');
   productTrashDialog.setAttribute('aria-label','ถังขยะสินค้า');
   productTrashDialog.style.cssText='width:min(960px,94vw);max-height:85vh;overflow:auto;border:1px solid #dce3eb;border-radius:16px;padding:24px;color:#24344e';

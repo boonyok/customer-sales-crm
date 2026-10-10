@@ -12,12 +12,14 @@ function renderProducts(reset=false){
   const q=(input.value||'').trim().toLocaleLowerCase();
   if(reset||q!==productQuery||productRows!==state.products){
     productPage=0;productQuery=q;productRows=state.products;
-    productMatches=q?state.products.filter(p=>[p.sku,p.name,p.size,p.price,p.status].join(' ').toLocaleLowerCase().includes(q)):state.products;
+    const normalize=value=>String(value??'').toLocaleLowerCase().replace(/[×✕]/g,'x').replace(/\s*x\s*/g,'x');
+    const words=normalize(q).split(/\s+/).filter(Boolean);
+    productMatches=q?state.products.filter(p=>{const text=normalize([p.sku,p.name,p.size].join(' '));return words.every(word=>text.includes(word));}):state.products;
   }
   const pages=Math.max(1,Math.ceil(productMatches.length/productPageSize));
   productPage=Math.min(productPage,pages-1);
   const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  body.innerHTML=productMatches.slice(productPage*productPageSize,(productPage+1)*productPageSize).map(p=>`<tr><td><strong>${e(p.sku)}</strong></td><td>${e(p.name)}</td><td>${e(p.size)}</td><td>฿ ${e(p.price)}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('');
+  body.innerHTML=productMatches.slice(productPage*productPageSize,(productPage+1)*productPageSize).map(p=>`<tr><td><strong>${e(p.sku)}</strong></td><td>${e(p.name)}</td><td>${e(p.size)}</td><td>฿ ${e(p.price)}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('')||(q?'<tr><td colspan="6" style="text-align:center;padding:32px">ไม่พบสินค้า ลองใช้บางส่วนของรหัส ชื่อสินค้า หรือขนาด</td></tr>':'');
   let pager=document.querySelector('#product-pager');
   if(!pager){
     pager=document.createElement('div');pager.id='product-pager';pager.style.cssText='display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px';
