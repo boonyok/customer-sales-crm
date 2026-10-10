@@ -12,5 +12,5 @@
   const update=()=>{const a=convert(first.value),b=convert(second.value);if(first.validity.badInput||second.validity.badInput||(first.value&&a===null)||(second.value&&b===null)){output.textContent='กรุณากรอกตัวเลขตั้งแต่ 0 ขึ้นไป';return;}if(a===null){output.textContent='กรอกขนาดด้านที่ 1 เป็นเซนติเมตร';return;}output.textContent=b===null?`${format(a)} นิ้ว`:`${format(a)}" x ${format(b)}"`;};
   first.addEventListener('input',update);second.addEventListener('input',update);
   panel.querySelector('[data-unit-clear]').onclick=()=>{first.value='';second.value='';update();first.focus();};
-  page.querySelector('.page-toolbar').after(panel);
+  page.querySelector('.page-toolbar').before(panel);
 })();
