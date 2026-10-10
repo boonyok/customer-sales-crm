@@ -1,7 +1,7 @@
 (() => {
   let context,busy=false,button,renameButton;
-  async function correctNames(c){
-    const org=c.currentOrg(),wrong='แบติดบานพับ',right='แบบติดบานพับ';let total=0;
+  async function correctNames(c,wrong='แบติดบานพับ',right='แบบติดบานพับ'){
+    const org=c.currentOrg();let total=0;
     const guard=()=>{if(c.currentOrg()!==org)throw Error('บริษัทเปลี่ยน หยุดแก้ไข');};
     while(true){
       guard();const scope='/rest/v1/products?organization_id=eq.'+encodeURIComponent(org);
@@ -48,9 +48,9 @@
     const input=document.createElement('input');input.type='file';input.accept='.json';input.hidden=true;document.body.append(input);
     button=document.createElement('button');button.type='button';button.className='ghost';button.textContent='นำเข้าข้อมูลสินค้า (JSON)';document.getElementById('add-product').before(button);button.hidden=window.CRMAccess?.role!=='admin';
     button.onclick=()=>{if(!busy)input.click();};
-    renameButton=document.createElement('button');renameButton.type='button';renameButton.className='ghost';renameButton.textContent='แก้คำผิดชื่อสินค้า';button.after(renameButton);renameButton.hidden=button.hidden;
-    renameButton.onclick=async()=>{if(busy||!confirm('แก้ชื่อสินค้า “แบติดบานพับ” เป็น “แบบติดบานพับ” ทุกขนาด โดยคงรหัส ขนาด และราคาเดิมไว้?'))return;busy=true;button.disabled=renameButton.disabled=true;const c=context;
-      try{const count=await correctNames(c);await c.refresh();c.notice('แก้ชื่อสินค้าเรียบร้อย '+count.toLocaleString('th-TH')+' รายการ • คงรหัส ขนาด และราคาเดิม');}
+    renameButton=document.createElement('button');renameButton.type='button';renameButton.className='ghost';renameButton.textContent='ปรับชื่อรุ่น FZL/FZS';button.after(renameButton);renameButton.hidden=button.hidden;
+    renameButton.onclick=async()=>{if(busy||!confirm('ตัดคำว่า แบบใบ Z 1" ออกจากชื่อรุ่นปรับซ้าย-ขวาและปรับบน-ล่าง โดยคงรหัส ขนาด และราคาเดิมไว้?'))return;busy=true;button.disabled=renameButton.disabled=true;const c=context;
+      try{let count=0;for(const direction of ['ปรับซ้าย-ขวา','ปรับบน-ล่าง'])count+=await correctNames(c,'แบบใบ Z 1" '+direction,direction);await c.refresh();c.notice('แก้ชื่อสินค้าเรียบร้อย '+count.toLocaleString('th-TH')+' รายการ • คงรหัส ขนาด และราคาเดิม');}
       catch(error){c.notice('แก้ชื่อไม่สำเร็จ: '+error.message+' • สามารถกดทำต่อได้โดยไม่แก้ซ้ำ');}
       finally{busy=false;button.disabled=renameButton.disabled=false;}
     };
