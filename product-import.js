@@ -48,6 +48,12 @@
     const input=document.createElement('input');input.type='file';input.accept='.json';input.hidden=true;document.body.append(input);
     button=document.createElement('button');button.type='button';button.className='ghost';button.textContent='นำเข้าข้อมูลสินค้า (JSON)';document.getElementById('add-product').before(button);button.hidden=window.CRMAccess?.role!=='admin';
     button.onclick=()=>{if(!busy)input.click();};
+    const verifyButton=document.createElement('button');verifyButton.type='button';verifyButton.className='ghost';verifyButton.textContent='ตรวจชื่อรุ่น FZL/FZS';button.after(verifyButton);verifyButton.hidden=button.hidden;
+    verifyButton.onclick=async()=>{verifyButton.disabled=true;const c=context,org=c.currentOrg();let cursor='',count=0,old=0;const samples=[];
+      try{while(true){if(c.currentOrg()!==org)throw Error('บริษัทเปลี่ยน');const rows=await c.request('/rest/v1/products?organization_id=eq.'+encodeURIComponent(org)+'&or=(name.like.*'+encodeURIComponent('ปรับซ้าย-ขวา')+'*,name.like.*'+encodeURIComponent('ปรับบน-ล่าง')+'*)&select=id,code,name&order=id.asc&limit=1000'+(cursor?'&id=gt.'+cursor:''));for(const r of rows){count++;if(r.name.includes('แบบใบ Z 1"'))old++;if(!samples.includes(r.name))samples.push(r.name);}if(rows.length<1000)break;cursor=rows.at(-1).id;}
+        c.notice('ตรวจจากฐานข้อมูล: '+count.toLocaleString('th-TH')+' รายการ • ยังมีข้อความเดิม '+old+' รายการ • '+samples.join(' / '));
+      }catch(error){c.notice('ตรวจชื่อไม่สำเร็จ: '+error.message);}finally{verifyButton.disabled=false;}
+    };
     renameButton=document.createElement('button');renameButton.type='button';renameButton.className='ghost';renameButton.textContent='ปรับชื่อรุ่น FZL/FZS';button.after(renameButton);renameButton.hidden=button.hidden;
     renameButton.onclick=async()=>{if(busy||!confirm('ตัดคำว่า แบบใบ Z 1" ออกจากชื่อรุ่นปรับซ้าย-ขวาและปรับบน-ล่าง โดยคงรหัส ขนาด และราคาเดิมไว้?'))return;busy=true;button.disabled=renameButton.disabled=true;const c=context;
       try{let count=0;for(const direction of ['ปรับซ้าย-ขวา','ปรับบน-ล่าง'])count+=await correctNames(c,'แบบใบ Z 1" '+direction,direction);await c.refresh();c.notice('แก้ชื่อสินค้าเรียบร้อย '+count.toLocaleString('th-TH')+' รายการ • คงรหัส ขนาด และราคาเดิม');}
