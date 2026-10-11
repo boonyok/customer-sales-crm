@@ -1,5 +1,10 @@
 (() => {
   const page=document.getElementById('products');
+  const details=page.querySelector('.price-search details');
+  const advanced=document.createElement('section');advanced.className='price-advanced-search';
+  const heading=document.createElement('h4');heading.textContent='ค้นหาแบบระบุรายละเอียด';advanced.append(heading);
+  for(const child of [...details.children])if(child.tagName!=='SUMMARY')advanced.append(child);
+  details.replaceWith(advanced);
   page.querySelector('.price-search').before(document.getElementById('product-unit-converter'));
   const input=document.getElementById('product-search'),box=input.closest('.search'),toolbar=box.closest('.page-toolbar');
   box.hidden=false;box.classList.add('product-search-box');toolbar.classList.add('product-search-toolbar');
