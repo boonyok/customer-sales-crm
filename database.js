@@ -311,6 +311,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>à
     await loadOrganization();
     await window.CRMAccess.configure(request,orgId);
     window.PriceList?.configure({prepare:ensureProducts,products:()=>state.products});
+    window.ProductEdit?.configure({request,currentOrg:()=>orgId,products:()=>state.products,refresh:()=>{render();}});
     window.ProductImport?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,refresh:async()=>{catalogReadyOrg=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     window.ProductBulkDelete?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,prepare:async()=>{if(catalogLoad)await catalogLoad.catch(()=>{});},refresh:async()=>{catalogReadyOrg=null;lastDeletedProduct=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     if(window.CRMAccess.role==='customer'){

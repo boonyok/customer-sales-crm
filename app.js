@@ -19,7 +19,7 @@ function renderProducts(reset=false){
   const pages=Math.max(1,Math.ceil(productMatches.length/productPageSize));
   productPage=Math.min(productPage,pages-1);
   const e=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  body.innerHTML=productMatches.slice(productPage*productPageSize,(productPage+1)*productPageSize).map(p=>`<tr><td><strong>${e(p.sku)}</strong></td><td>${e(p.name)}</td><td>${e(p.size)}</td><td>฿ ${e(p.price)}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('')||(q?'<tr><td colspan="6" style="text-align:center;padding:32px">ไม่พบสินค้า ลองใช้บางส่วนของรหัส ชื่อสินค้า หรือขนาด</td></tr>':'');
+  body.innerHTML=productMatches.slice(productPage*productPageSize,(productPage+1)*productPageSize).map(p=>`<tr data-edit-product="${e(p.id||'')}" tabindex="0" aria-label="แก้ไขสินค้า ${e(p.sku)}"><td><strong>${e(p.sku)}</strong></td><td>${e(p.name)}</td><td>${e(p.size)}</td><td>฿ ${e(p.price)}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('')||(q?'<tr><td colspan="6" style="text-align:center;padding:32px">ไม่พบสินค้า ลองใช้บางส่วนของรหัส ชื่อสินค้า หรือขนาด</td></tr>':'');
   let pager=document.querySelector('#product-pager');
   if(!pager){
     pager=document.createElement('div');pager.id='product-pager';pager.style.cssText='display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px';
