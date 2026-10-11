@@ -5,7 +5,7 @@
   const pattern = v => '*' + String(v).replace(/[\\%_*]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1*') + '*';
   function build(org, {query='',category='all',filters={},offset=0,limit=101}={}) {
     const p = new URLSearchParams();
-    const select=['id','sku','label','is_active','product:products!inner(id,code,name,unit,is_active)','variant_prices(price,starts_on)'];
+    const select=['id','sku','label','is_active','product:products!inner(id,code,name,unit,is_active)'];
     const conditions=[];
     let alias=0;
     function text(values, {sku=false,negative=false}={}) {
@@ -54,8 +54,19 @@
           const raw=await c.request(path);
           if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
           if(!Array.isArray(raw))throw Error('โหลดสินค้าไม่สำเร็จ');
-          const size=(options.limit??101)-1,more=raw.length>size;
-          const rows=raw.slice(0,size).map(v=>({id:v.id,productId:v.product.id,sku:v.sku||v.product.code,name:v.product.name,unit:v.product.unit||'ชิ้น',size:v.label,price:Number((v.variant_prices||[]).slice().sort((a,b)=>String(b.starts_on).localeCompare(String(a.starts_on)))[0]?.price??0).toFixed(2),status:v.product.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
+          const size=(options.limit??101)-1,more=raw.length>size,page=raw.slice(0,size),prices=new Map();
+          if(page.length){
+            const ids=page.map(v=>v.id);if(ids.some(id=>!/^[0-9a-f-]{36}$/i.test(id)))throw Error('รหัสสินค้าไม่ถูกต้อง');
+            // Fetch price history only for the visible IDs, not inside a broad
+            // joined search (which can aggregate every price before filtering).
+            for(let offset=0;;offset+=1000){
+              const list=await c.request('/rest/v1/variant_prices?variant_id=in.('+ids.join(',')+')&select=variant_id,price,starts_on&order=starts_on.desc,id.desc&limit=1000&offset='+offset);
+              if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
+              for(const price of list)if(!prices.has(price.variant_id))prices.set(price.variant_id,price.price);
+              if(list.length<1000)break;
+            }
+          }
+          const rows=page.map(v=>({id:v.id,productId:v.product.id,sku:v.sku||v.product.code,name:v.product.name,unit:v.product.unit||'ชิ้น',size:v.label,price:Number(prices.get(v.id)??0).toFixed(2),status:v.product.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
           const value={rows,more,next:(options.offset??0)+size};
           cache.set(key,{time:Date.now(),value});if(cache.size>30)cache.delete(cache.keys().next().value);
           return value;
