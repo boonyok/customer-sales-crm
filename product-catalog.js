@@ -3,7 +3,7 @@
   const escape = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const literal = v => '"' + String(v).replace(/\\/g,'\\\\').replace(/"/g,'\\"') + '"';
   const pattern = v => '*' + String(v).replace(/[\\%_*]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1*') + '*';
-  function build(org, {query='',category='all',filters={},offset=0,limit=101}={}) {
+  function build(org, {query='',category='all',filters={},cursor=null,limit=101,firstField=null}={}) {
     const p = new URLSearchParams();
     const select=['id','sku','label','is_active','product:products!inner(id,code,name,unit,is_active)'];
     const conditions=[];
@@ -20,8 +20,11 @@
     if(words.length>12||String(query).length>200)throw Error('คำค้นยาวเกินไป กรุณาใช้ไม่เกิน 12 คำ');
     // Keep dimension pairs together so both 24x48 and 24 x 48 work.
     const normalized=String(query).replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1x');
-    normalized.trim().split(/\s+/).filter(Boolean).forEach(word=>text([word],{sku:true}));
-    if(category!=='all') { const key='category';select.push(key+':products()');p.set(key+'.name','ilike.'+pattern(category));conditions.push(key+'.not.is.null'); }
+    const terms=normalized.trim().split(/\s+/).filter(Boolean),parentConditions=[];
+    if(firstField&&terms.length){const first=terms.shift();if(firstField==='name')parentConditions.push('name.ilike.'+literal(pattern(first)));else p.set(firstField,'ilike.'+pattern(first));}
+    terms.forEach(word=>text([word],{sku:true}));
+    if(category!=='all')parentConditions.push('name.ilike.'+literal(pattern(category)));
+    if(parentConditions.length)p.set('product.and','('+parentConditions.join(',')+')');
     const colors={aluminium:['aluminium','aluminum','อลูมิเนียม'],white:['white','สีขาว'],black:['black','สีดำ']};
     if(colors[filters.color])text(colors[filters.color]);
     for(const [key,yes,no] of [['damper',['with damper','มีตัวปรับลม'],['without damper','no damper','ไม่มีตัวปรับลม']],['screen',['with screen','with insect screen','มีมุ้ง'],['without screen','without insect screen','no screen','ไม่มีมุ้ง']]]) {
@@ -39,7 +42,7 @@
     p.set('select',select.join(','));p.set('product.organization_id','eq.'+org);
     p.set('is_active','eq.true');
     if(conditions.length)p.set('and','('+conditions.join(',')+')');
-    p.set('order','id.asc');p.set('limit',String(limit));p.set('offset',String(offset));
+    p.set('order','id.asc');p.set('limit',String(limit));if(cursor)p.set('id','gt.'+cursor);
     return '/rest/v1/product_variants?'+p.toString();
   }
   function create(c) {
@@ -47,13 +50,19 @@
     return {
       clear(){epoch++;cache.clear();pending.clear();},
       async search(options={}) {
-        const org=c.currentOrg(),version=epoch,path=build(org,options),key=org+'|'+path;
+        const org=c.currentOrg(),version=epoch,fields=String(options.query??'').trim()?['sku','label','name']:[null];
+        const paths=fields.map(firstField=>build(org,{...options,firstField})),key=org+'|'+paths.join('|');
         const saved=cache.get(key);if(saved&&Date.now()-saved.time<30000)return saved.value;
         if(pending.has(key))return pending.get(key);
         const task=(async()=>{
-          const raw=await c.request(path);
+          // Separate indexed/root filters from the parent-name filter. A single
+          // OR across a nullable embed can force expensive RLS checks for every
+          // catalog row. Merge <=101 candidates per branch with a shared cursor.
+          const lists=await Promise.all(paths.map(path=>c.request(path)));
           if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
-          if(!Array.isArray(raw))throw Error('โหลดสินค้าไม่สำเร็จ');
+          if(lists.some(list=>!Array.isArray(list)))throw Error('โหลดสินค้าไม่สำเร็จ');
+          const unique=new Map();for(const list of lists)for(const row of list)unique.set(row.id,row);
+          const raw=[...unique.values()].sort((a,b)=>a.id.localeCompare(b.id));
           const size=(options.limit??101)-1,more=raw.length>size,page=raw.slice(0,size),prices=new Map();
           if(page.length){
             const ids=page.map(v=>v.id);if(ids.some(id=>!/^[0-9a-f-]{36}$/i.test(id)))throw Error('รหัสสินค้าไม่ถูกต้อง');
@@ -67,7 +76,7 @@
             }
           }
           const rows=page.map(v=>({id:v.id,productId:v.product.id,sku:v.sku||v.product.code,name:v.product.name,unit:v.product.unit||'ชิ้น',size:v.label,price:Number(prices.get(v.id)??0).toFixed(2),status:v.product.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
-          const value={rows,more,next:(options.offset??0)+size};
+          const value={rows,more,next:(options.offset??0)+size,nextCursor:rows.at(-1)?.id??options.cursor??null};
           cache.set(key,{time:Date.now(),value});if(cache.size>30)cache.delete(cache.keys().next().value);
           return value;
         })().finally(()=>{if(pending.get(key)===task)pending.delete(key);});
@@ -75,7 +84,7 @@
       }
     };
   }
-  let service,context,current=[],offset=0,more=false,busy=false,generation=0,timer,boundOrg;
+  let service,context,current=[],offset=0,more=false,busy=false,generation=0,timer,boundOrg,cursors=[null];
   const body=document.getElementById('product-body'),input=document.getElementById('product-search'),pager=document.getElementById('product-pager');
   const prev=pager.querySelector('[data-product-prev]'),next=pager.querySelector('[data-product-next]'),status=pager.querySelector('[data-product-page]');
   function paint(){
@@ -86,12 +95,12 @@
   }
   async function load(reset=false,force=false) {
     if(!service)return;
-    clearTimeout(timer);if(reset)offset=0;if(force)service.clear();
+    clearTimeout(timer);if(reset){offset=0;cursors=[null];}if(force)service.clear();
     const run=++generation,pageOffset=offset;busy=true;current=[];context.setRows([]);status.textContent='กำลังค้นหาสินค้า…';paint();
     try {
-      const result=await service.search({query:input.value,offset:pageOffset});
+      const result=await service.search({query:input.value,cursor:cursors[Math.floor(pageOffset/100)],offset:pageOffset});
       if(run!==generation)return;
-      current=result.rows;more=result.more;context.setRows(current);context.notice('โหลดเฉพาะหน้านี้แล้ว '+current.length+' รายการ • ค้นหาจากฐานข้อมูลโดยตรง');
+      current=result.rows;more=result.more;cursors[Math.floor(pageOffset/100)+1]=result.nextCursor;context.setRows(current);context.notice('โหลดเฉพาะหน้านี้แล้ว '+current.length+' รายการ • ค้นหาจากฐานข้อมูลโดยตรง');
     }catch(error){if(run!==generation)return;more=false;context.notice('โหลดสินค้าไม่สำเร็จ: '+error.message+' • กด Enter เพื่อลองอีกครั้ง');}
     finally{if(run===generation){busy=false;paint();}}
   }

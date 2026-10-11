@@ -39,10 +39,10 @@
     }
     return true;
   };
-  let resultRows=[],nextOffset=0,searchFilters,searchCategory;
+  let resultRows=[],nextOffset=0,nextCursor=null,searchFilters,searchCategory;
   async function search(append=false){
     const run=++generation;
-    if(!append){results.replaceChildren();resultRows=[];nextOffset=0;searchFilters=Object.fromEntries(new FormData(form));searchCategory=category;}
+    if(!append){results.replaceChildren();resultRows=[];nextOffset=0;nextCursor=null;searchFilters=Object.fromEntries(new FormData(form));searchCategory=category;}
     status.textContent='กำลังค้นหาสินค้า…';
     results.querySelector('[data-price-more]')?.remove();
     try{
@@ -50,12 +50,12 @@
       let more=false;const target=resultRows.length+100;
       // Bound each interaction to <=500 candidates. Never wait for the catalog.
       for(let page=0;page<5;page++){
-        const result=await context.search({query:searchFilters.query,category:searchCategory,filters:searchFilters,offset:nextOffset});
+        const result=await context.search({query:searchFilters.query,category:searchCategory,filters:searchFilters,cursor:nextCursor,offset:nextOffset});
         if(run!==generation)return;
-        const start=nextOffset;nextOffset=result.next;more=result.more;
+        const start=nextOffset;nextOffset=result.next;nextCursor=result.nextCursor;more=result.more;
         for(let i=0;i<result.rows.length;i++){
           if(match(result.rows[i],searchFilters,searchCategory))resultRows.push(result.rows[i]);
-          if(resultRows.length>=target){nextOffset=start+i+1;more=result.more||i<result.rows.length-1;break;}
+          if(resultRows.length>=target){nextOffset=start+i+1;nextCursor=result.rows[i].id;more=result.more||i<result.rows.length-1;break;}
         }
         if(!more||resultRows.length>=target)break;
       }
