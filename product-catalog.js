@@ -38,9 +38,8 @@
     }
     p.set('select',select.join(','));p.set('product.organization_id','eq.'+org);
     p.set('is_active','eq.true');
-    p.set('variant_prices.order','starts_on.desc');p.set('variant_prices.limit','1');
     if(conditions.length)p.set('and','('+conditions.join(',')+')');
-    p.set('order','sku.asc,id.asc');p.set('limit',String(limit));p.set('offset',String(offset));
+    p.set('order','id.asc');p.set('limit',String(limit));p.set('offset',String(offset));
     return '/rest/v1/product_variants?'+p.toString();
   }
   function create(c) {
@@ -56,7 +55,7 @@
           if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
           if(!Array.isArray(raw))throw Error('โหลดสินค้าไม่สำเร็จ');
           const size=(options.limit??101)-1,more=raw.length>size;
-          const rows=raw.slice(0,size).map(v=>({id:v.id,productId:v.product.id,sku:v.sku||v.product.code,name:v.product.name,unit:v.product.unit||'ชิ้น',size:v.label,price:Number(v.variant_prices?.[0]?.price??0).toFixed(2),status:v.product.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
+          const rows=raw.slice(0,size).map(v=>({id:v.id,productId:v.product.id,sku:v.sku||v.product.code,name:v.product.name,unit:v.product.unit||'ชิ้น',size:v.label,price:Number((v.variant_prices||[]).slice().sort((a,b)=>String(b.starts_on).localeCompare(String(a.starts_on)))[0]?.price??0).toFixed(2),status:v.product.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
           const value={rows,more,next:(options.offset??0)+size};
           cache.set(key,{time:Date.now(),value});if(cache.size>30)cache.delete(cache.keys().next().value);
           return value;
@@ -72,7 +71,7 @@
     if(!service)return;
     body.innerHTML=current.map(p=>`<tr data-edit-product="${escape(p.id)}" tabindex="0" aria-label="แก้ไขสินค้า ${escape(p.sku)}"><td><strong>${escape(p.sku)}</strong></td><td>${escape(p.name)}</td><td>${escape(p.size)}</td><td>฿ ${escape(p.price)}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:32px">'+(busy?'กำลังค้นหาสินค้า…':'ไม่พบสินค้า')+'</td></tr>';
     prev.disabled=busy||offset===0;next.disabled=busy||!more;
-    if(!busy)status.textContent=`แสดง ${current.length?offset+1:0}–${offset+current.length} รายการ · หน้า ${Math.floor(offset/100)+1}${more?' · มีรายการถัดไป':''}`;
+    if(!busy)status.textContent=current.length?`แสดง ${offset+1}–${offset+current.length} รายการ · หน้า ${Math.floor(offset/100)+1}${more?' · มีรายการถัดไป':''}`:'ไม่พบรายการ • กด Enter เพื่อค้นหาอีกครั้ง';
   }
   async function load(reset=false,force=false) {
     if(!service)return;
