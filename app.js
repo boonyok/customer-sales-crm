@@ -8,6 +8,7 @@ function productDeleteButton(product){return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{
 let productPage=0,productQuery='',productRows=null,productMatches=[];
 const productPageSize=100;
 function renderProducts(reset=false){
+  if(typeof window!=='undefined'&&window.ProductCatalogUI?.active){window.ProductCatalogUI.paint();return;}
   const input=document.querySelector('#product-search'),body=document.querySelector('#product-body');
   const q=(input.value||'').trim().toLocaleLowerCase();
   if(reset||q!==productQuery||productRows!==state.products){

@@ -39,13 +39,26 @@
     }
     return true;
   };
-  async function search(){
-    const run=++generation;results.replaceChildren();status.textContent='กำลังค้นหาสินค้า…';
-    try{if(!context)throw Error('รอเชื่อมต่อฐานข้อมูลสักครู่ แล้วค้นหาอีกครั้ง');await context.prepare();if(run!==generation)return;
-      const filters=Object.fromEntries(new FormData(form)),rows=context.products().filter(p=>match(p,filters,category));
-      status.textContent=rows.length?`พบ ${rows.length.toLocaleString('th-TH')} รายการ${rows.length>100?' • แสดง 100 รายการแรก กรุณาระบุคำค้นเพิ่มเติม':''}`:'ไม่พบสินค้า • เพิ่มข้อมูลสินค้าและราคาก่อนเริ่มค้นหา';
-      results.innerHTML=rows.slice(0,100).map(p=>`<article class="price-result"><small>${escape(p.sku)}</small><h3>${escape(p.name)}</h3><p>${escape(p.size)}</p><strong>฿ ${Number(p.price).toLocaleString('th-TH',{minimumFractionDigits:2})}</strong><small>ราคาก่อน VAT และก่อนหักส่วนลด / ${escape(p.unit||'ชิ้น')}</small></article>`).join('');
-    }catch(error){if(run===generation)status.textContent='ค้นหาไม่สำเร็จ: '+error.message;}
+  let resultRows=[],nextOffset=0,searchFilters,searchCategory;
+  async function search(append=false){
+    const run=++generation;
+    if(!append){results.replaceChildren();resultRows=[];nextOffset=0;searchFilters=Object.fromEntries(new FormData(form));searchCategory=category;}
+    status.textContent='กำลังค้นหาสินค้า…';
+    results.querySelector('[data-price-more]')?.remove();
+    try{
+      if(!context)throw Error('รอเชื่อมต่อฐานข้อมูลสักครู่ แล้วค้นหาอีกครั้ง');
+      let more=false;const target=resultRows.length+100;
+      // Bound each interaction to <=500 candidates. Never wait for the catalog.
+      for(let page=0;page<5;page++){
+        const result=await context.search({query:searchFilters.query,category:searchCategory,filters:searchFilters,offset:nextOffset});
+        if(run!==generation)return;
+        resultRows.push(...result.rows.filter(p=>match(p,searchFilters,searchCategory)));nextOffset=result.next;more=result.more;
+        if(!more||resultRows.length>=target)break;
+      }
+      status.textContent=resultRows.length?`แสดง ${resultRows.length.toLocaleString('th-TH')} รายการ${more?' • ยังมีรายการเพิ่มเติม':''}`:(more?'ยังไม่พบในชุดนี้ • กดค้นหาต่อเพื่อดูรายการเพิ่มเติม':'ไม่พบสินค้าตามเงื่อนไข');
+      results.innerHTML=resultRows.map(p=>`<article class="price-result"><small>${escape(p.sku)}</small><h3>${escape(p.name)}</h3><p>${escape(p.size)}</p><strong>฿ ${Number(p.price).toLocaleString('th-TH',{minimumFractionDigits:2})}</strong><small>ราคาก่อน VAT และก่อนหักส่วนลด / ${escape(p.unit||'ชิ้น')}</small></article>`).join('');
+      if(more){const button=document.createElement('button');button.type='button';button.className='ghost';button.dataset.priceMore='';button.textContent='ค้นหาต่อ / แสดงเพิ่ม';button.onclick=()=>search(true);results.append(button);}
+    }catch(error){if(run===generation){status.textContent='ค้นหาไม่สำเร็จ: '+error.message;const button=document.createElement('button');button.type='button';button.className='ghost';button.textContent='ลองค้นหาอีกครั้ง';button.onclick=()=>search();results.append(button);}}
   }
   window.PriceList={configure:value=>{context=value;},match};
 })();

@@ -119,7 +119,7 @@
   productDeleteNotice.setAttribute('role','status');
   productDeleteNotice.style.cssText='margin:12px 0;color:#526173';
   document.querySelector('#product-body').closest('article').before(productDeleteNotice);
-  const refreshProductList=()=>{render();document.querySelector('#product-search').dispatchEvent(new Event('input'));renderProductTrash();};
+  const refreshProductList=()=>{catalogService?.clear();render();window.ProductCatalogUI?.load(false,true);renderProductTrash();};
   const showProductDeleteNotice=(message,undo=false)=>{
     productDeleteNotice.replaceChildren(document.createTextNode(message));
     if(undo){const button=document.createElement('button');button.type='button';button.className='ghost';button.dataset.undoProductDelete='';button.textContent='เลิกทำ';button.style.marginLeft='12px';productDeleteNotice.append(button);}
@@ -302,16 +302,18 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     await window.TaxRegisters.load(request,orgId);
   };
   let productsOrganizationReady=false;
+  let catalogService=null;
   const loadVisibleProducts=()=>{
-    if(session&&productsOrganizationReady&&['products','product-data'].some(id=>document.getElementById(id)?.classList.contains('active-page')))ensureProducts().catch(()=>{});
+    if(session&&productsOrganizationReady&&document.getElementById('product-data')?.classList.contains('active-page'))window.ProductCatalogUI.load();
   };
   new MutationObserver(loadVisibleProducts).observe(document.querySelector('#products'),{attributes:true,attributeFilter:['class']});
   new MutationObserver(loadVisibleProducts).observe(document.querySelector('#product-data'),{attributes:true,attributeFilter:['class']});
   const syncAll = async () => {
     await loadOrganization();
     await window.CRMAccess.configure(request,orgId);
-    window.PriceList?.configure({prepare:ensureProducts,products:()=>state.products});
-    window.ProductEdit?.configure({request,currentOrg:()=>orgId,products:()=>state.products,refresh:()=>{render();}});
+    catalogService=window.ProductCatalogUI.configure({request,currentOrg:()=>orgId,setRows:rows=>{state.products=rows;},notice:showProductDeleteNotice});
+    window.PriceList?.configure({search:options=>catalogService.search(options)});
+    window.ProductEdit?.configure({request,currentOrg:()=>orgId,products:()=>state.products,refresh:()=>{catalogService.clear();render();}});
     window.ProductImport?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,refresh:async()=>{catalogReadyOrg=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     window.ProductBulkDelete?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,prepare:async()=>{if(catalogLoad)await catalogLoad.catch(()=>{});},refresh:async()=>{catalogReadyOrg=null;lastDeletedProduct=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     if(window.CRMAccess.role==='customer'){
@@ -409,7 +411,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     const products = await request('/rest/v1/products', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ organization_id: orgId, code: sku, name: data.name, unit: 'ชิ้น' }) });
     const variants = await request('/rest/v1/product_variants', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ product_id: products[0].id, sku, label: data.size }) });
     await request('/rest/v1/variant_prices', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ variant_id: variants[0].id, price: Number(data.price) }) });
-    await syncProducts(); render();
+    catalogService.clear();await window.ProductCatalogUI.load(true);render();
   };
   const importVDFlangeCatalog = async () => {
     if (localStorage.getItem('vd-flange-catalog-imported-v2')===orgId) return;
