@@ -52,7 +52,11 @@
       for(let page=0;page<5;page++){
         const result=await context.search({query:searchFilters.query,category:searchCategory,filters:searchFilters,offset:nextOffset});
         if(run!==generation)return;
-        resultRows.push(...result.rows.filter(p=>match(p,searchFilters,searchCategory)));nextOffset=result.next;more=result.more;
+        const start=nextOffset;nextOffset=result.next;more=result.more;
+        for(let i=0;i<result.rows.length;i++){
+          if(match(result.rows[i],searchFilters,searchCategory))resultRows.push(result.rows[i]);
+          if(resultRows.length>=target){nextOffset=start+i+1;more=result.more||i<result.rows.length-1;break;}
+        }
         if(!more||resultRows.length>=target)break;
       }
       status.textContent=resultRows.length?`แสดง ${resultRows.length.toLocaleString('th-TH')} รายการ${more?' • ยังมีรายการเพิ่มเติม':''}`:(more?'ยังไม่พบในชุดนี้ • กดค้นหาต่อเพื่อดูรายการเพิ่มเติม':'ไม่พบสินค้าตามเงื่อนไข');

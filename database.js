@@ -303,14 +303,21 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>à
   };
   let productsOrganizationReady=false;
   let catalogService=null;
+  let catalogPageWasActive=false;
   const loadVisibleProducts=()=>{
-    if(session&&productsOrganizationReady&&document.getElementById('product-data')?.classList.contains('active-page'))window.ProductCatalogUI.load();
+    if(!session||!productsOrganizationReady)return;
+    const active=document.getElementById('product-data')?.classList.contains('active-page');
+    // Layout observers can add existing CSS classes after every table paint.
+    // Only navigation into this page may trigger a load, not cosmetic changes.
+    if(active&&!catalogPageWasActive)window.ProductCatalogUI.load();
+    catalogPageWasActive=Boolean(active);
   };
   new MutationObserver(loadVisibleProducts).observe(document.querySelector('#products'),{attributes:true,attributeFilter:['class']});
   new MutationObserver(loadVisibleProducts).observe(document.querySelector('#product-data'),{attributes:true,attributeFilter:['class']});
   const syncAll = async () => {
     await loadOrganization();
     await window.CRMAccess.configure(request,orgId);
+    catalogPageWasActive=false;
     catalogService=window.ProductCatalogUI.configure({request,currentOrg:()=>orgId,setRows:rows=>{state.products=rows;},notice:showProductDeleteNotice});
     window.PriceList?.configure({search:options=>catalogService.search(options)});
     window.ProductEdit?.configure({request,currentOrg:()=>orgId,products:()=>state.products,refresh:()=>{catalogService.clear();render();}});
