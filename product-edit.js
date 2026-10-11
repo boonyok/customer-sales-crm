@@ -1,9 +1,9 @@
 (() => {
   let context,busy=false;
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const dialog=document.createElement('dialog');dialog.setAttribute('aria-label','แก้ไขข้อมูลสินค้า');
+  const dialog=document.createElement('dialog');dialog.id='product-edit-dialog';dialog.setAttribute('aria-label','แก้ไขข้อมูลสินค้า');
   dialog.style.cssText='width:min(620px,94vw);padding:24px;border:1px solid #b9dcf3;border-radius:16px;color:#174b6b;max-height:90vh;overflow:auto';document.body.append(dialog);
-  const style=document.createElement('style');style.textContent='#product-body tr[data-edit-product]{cursor:pointer}#product-body tr[data-edit-product]:hover,#product-body tr[data-edit-product]:focus{background:#e4f5ff;outline:2px solid #b9e5f6;outline-offset:-2px}';document.head.append(style);
+  const style=document.createElement('style');style.textContent='#product-body tr[data-edit-product]{cursor:pointer}#product-body tr[data-edit-product]:hover,#product-body tr[data-edit-product]:focus{background:#e4f5ff;outline:2px solid #b9e5f6;outline-offset:-2px}#product-edit-dialog .field{display:flex;flex-direction:column;gap:7px;margin:18px 0}#product-edit-dialog .field input{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #bbd9ec;border-radius:9px;font:inherit;color:#174b6b;background:#fff}#product-edit-dialog input[readonly]{background:#f0f6fb;color:#6d8395}#product-edit-dialog .field small{font-size:12px;color:#71879a}#product-edit-dialog h2{margin:0 0 20px}#product-edit-dialog .form-actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #e0edf6;padding-top:18px}#product-edit-dialog::backdrop{background:#183e5c66}';document.head.append(style);
   async function open(id){
     if(busy||!context||!window.CRMAccess?.can('products','edit'))return;
     const c=context,org=c.currentOrg(),p=c.products().find(p=>p.id===id);if(!p)return;
@@ -26,7 +26,7 @@
           else await c.request('/rest/v1/variant_prices',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({variant_id:p.id,price})});
           p.price=price.toFixed(2);
         }
-        c.refresh();dialog.close();
+        c.refresh();document.getElementById('product-search').dispatchEvent(new Event('input'));dialog.close();
       }catch(error){c.refresh();status.textContent='บันทึกไม่ครบ: '+error.message+' • ส่วนที่บันทึกสำเร็จแสดงค่าล่าสุดแล้ว กดบันทึกอีกครั้งเพื่อทำต่อ';}
       finally{busy=false;controls.forEach(n=>n.disabled=false);}
     };
