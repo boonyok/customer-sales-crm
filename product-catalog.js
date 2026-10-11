@@ -45,37 +45,40 @@
     p.set('order','id.asc');p.set('limit',String(limit));if(cursor)p.set('id','gt.'+cursor);
     return '/rest/v1/product_variants?'+p.toString();
   }
+  function rpcFilters(org,{query='',category='all',filters={},cursor=null,limit=101}={}) {
+    const words=String(query).replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1x').trim().split(/\s+/).filter(Boolean);
+    if(words.length>12||String(query).length>200)throw Error('คำค้นยาวเกินไป กรุณาใช้ไม่เกิน 12 คำ');
+    const like=v=>'%'+String(v).replace(/[\\%_]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1%')+'%';
+    const groups=[];
+    const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
+    const colors={aluminium:['aluminium','aluminum','อลูมิเนียม'],white:['white','สีขาว'],black:['black','สีดำ']};
+    if(colors[filters.color])add(colors[filters.color]);
+    for(const [key,yes,no] of [['damper',['with damper','มีตัวปรับลม'],['without damper','no damper','ไม่มีตัวปรับลม']],['screen',['with screen','with insect screen','มีมุ้ง'],['without screen','without insect screen','no screen','ไม่มีมุ้ง']]]) {
+      if(filters[key]==='yes'){add(yes);add(no,true);}if(filters[key]==='no')add(no);
+    }
+    for(const value of [filters.width,filters.length].filter(Boolean)) {
+      const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
+      if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
+      add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
+    }
+    return {p_org:org,p_words:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101))};
+  }
   function create(c) {
     const cache=new Map(),pending=new Map();let epoch=0;
     return {
       clear(){epoch++;cache.clear();pending.clear();},
       async search(options={}) {
-        const org=c.currentOrg(),version=epoch,fields=String(options.query??'').trim()?['sku','label','name']:[null];
-        const paths=fields.map(firstField=>build(org,{...options,firstField})),key=org+'|'+paths.join('|');
+        const org=c.currentOrg(),version=epoch,payload=rpcFilters(org,options),key=JSON.stringify(payload)+'|'+(options.offset??0);
         const saved=cache.get(key);if(saved&&Date.now()-saved.time<30000)return saved.value;
         if(pending.has(key))return pending.get(key);
         const task=(async()=>{
-          // Separate indexed/root filters from the parent-name filter. A single
-          // OR across a nullable embed can force expensive RLS checks for every
-          // catalog row. Merge <=101 candidates per branch with a shared cursor.
-          const lists=await Promise.all(paths.map(path=>c.request(path)));
+          // The read-only RPC checks the same organization/view permission once,
+          // then selects <=101 matching rows and only their latest prices.
+          const raw=await c.request('/rest/v1/rpc/crm_search_product_page',{method:'POST',body:JSON.stringify(payload)});
           if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
-          if(lists.some(list=>!Array.isArray(list)))throw Error('โหลดสินค้าไม่สำเร็จ');
-          const unique=new Map();for(const list of lists)for(const row of list)unique.set(row.id,row);
-          const raw=[...unique.values()].sort((a,b)=>a.id.localeCompare(b.id));
-          const size=(options.limit??101)-1,more=raw.length>size,page=raw.slice(0,size),prices=new Map();
-          if(page.length){
-            const ids=page.map(v=>v.id);if(ids.some(id=>!/^[0-9a-f-]{36}$/i.test(id)))throw Error('รหัสสินค้าไม่ถูกต้อง');
-            // Fetch price history only for the visible IDs, not inside a broad
-            // joined search (which can aggregate every price before filtering).
-            for(let offset=0;;offset+=1000){
-              const list=await c.request('/rest/v1/variant_prices?variant_id=in.('+ids.join(',')+')&select=variant_id,price,starts_on&order=starts_on.desc,id.desc&limit=1000&offset='+offset);
-              if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
-              for(const price of list)if(!prices.has(price.variant_id))prices.set(price.variant_id,price.price);
-              if(list.length<1000)break;
-            }
-          }
-          const rows=page.map(v=>({id:v.id,productId:v.product.id,sku:v.sku||v.product.code,name:v.product.name,unit:v.product.unit||'ชิ้น',size:v.label,price:Number(prices.get(v.id)??0).toFixed(2),status:v.product.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
+          if(!Array.isArray(raw))throw Error('โหลดสินค้าไม่สำเร็จ');
+          const size=payload.p_limit-1,more=raw.length>size,page=raw.slice(0,size);
+          const rows=page.map(v=>({id:v.id,productId:v.product_id,sku:v.sku,name:v.name,unit:v.unit||'ชิ้น',size:v.label,price:Number(v.price??0).toFixed(2),status:v.product_is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true}));
           const value={rows,more,next:(options.offset??0)+size,nextCursor:rows.at(-1)?.id??options.cursor??null};
           cache.set(key,{time:Date.now(),value});if(cache.size>30)cache.delete(cache.keys().next().value);
           return value;
@@ -104,7 +107,7 @@
     }catch(error){if(run!==generation)return;more=false;context.notice('โหลดสินค้าไม่สำเร็จ: '+error.message+' • กด Enter เพื่อลองอีกครั้ง');}
     finally{if(run===generation){busy=false;paint();}}
   }
-  window.ProductCatalog={build,create};
+  window.ProductCatalog={build,rpcFilters,create};
   window.ProductCatalogUI={get active(){return Boolean(service);},paint,load,
     configure(c){context=c;if(!service)service=create(c);if(boundOrg!==c.currentOrg()){boundOrg=c.currentOrg();generation++;service.clear();current=[];offset=0;more=false;c.setRows([]);}prev.onclick=()=>{offset=Math.max(0,offset-100);load();};next.onclick=()=>{offset+=100;load();};input.oninput=()=>{generation++;clearTimeout(timer);busy=true;more=false;current=[];c.setRows([]);status.textContent='กำลังค้นหาสินค้า…';paint();timer=setTimeout(()=>load(true),250);};input.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();load(true);}};return service;}
   };
