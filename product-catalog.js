@@ -25,8 +25,9 @@
     terms.forEach(word=>text([word],{sku:true}));
     if(category!=='all')parentConditions.push('name.ilike.'+literal(pattern(category)));
     if(parentConditions.length)p.set('product.and','('+parentConditions.join(',')+')');
-    const colors={aluminium:['aluminium','aluminum','อลูมิเนียม'],white:['white','สีขาว'],black:['black','สีดำ']};
+    const colors={white:['white','สีขาว'],black:['black','สีดำ'],custom:['สีตามแบบ']};
     if(colors[filters.color])text(colors[filters.color]);
+    if(filters.color==='aluminium')text(['สีขาว','สีดำ','สีตามแบบ','white','black'],{negative:true});
     const styles={RT:['ปีกเรียบ'],RH:['ติดบานพับ'],RR:['ถอดหลุด'],RUU:['T-Bar ปิด-เปิดได้','T-Bar เปิด-ปิดได้']};
     if(filters.returnStyle==='R')text(['ปีกเรียบ','ติดบานพับ','ถอดหลุด','วางแทนฝ้า T-Bar'],{negative:true});
     else if(styles[filters.returnStyle])text(styles[filters.returnStyle]);
@@ -58,12 +59,15 @@
     const like=v=>'%'+String(v).replace(/[\\%_]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1%')+'%';
     const groups=[];
     const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
-    const colors={aluminium:['aluminium','aluminum','อลูมิเนียม'],white:['white','สีขาว'],black:['black','สีดำ']};
-    if(colors[filters.color])add(colors[filters.color]);
-    const styles={RT:['ปีกเรียบ'],RH:['ติดบานพับ'],RR:['ถอดหลุด'],RUU:['T-Bar ปิด-เปิดได้','T-Bar เปิด-ปิดได้']};
-    if(filters.returnStyle==='R')add(['ปีกเรียบ','ติดบานพับ','ถอดหลุด','วางแทนฝ้า T-Bar'],true);
-    else if(styles[filters.returnStyle])add(styles[filters.returnStyle]);
-    if(filters.returnStyle==='RU')add(['ปิด-เปิดได้','เปิด-ปิดได้'],true);
+    const addSku=(patterns,negative=false)=>groups.push({patterns,negative,sku_only:true});
+    const colors={white:['%W'],black:['%BK'],custom:['%T']};
+    if(colors[filters.color])addSku(colors[filters.color]);
+    if(filters.color==='aluminium')addSku(['%W','%BK','%T'],true);
+    if(['R','RT','RH','RR','RU','RUU'].includes(filters.returnStyle)){
+      addSku([filters.returnStyle+'_%']);
+      if(filters.returnStyle==='R')addSku(['RU%','RT%','RH%','RR%'],true);
+      if(filters.returnStyle==='RU')addSku(['RUU%'],true);
+    }
     for(const [key,yes,no] of [['damper',['with damper','มีตัวปรับลม'],['without damper','no damper','ไม่มีตัวปรับลม']],['screen',['with screen','with insect screen','มีมุ้ง'],['without screen','without insect screen','no screen','ไม่มีมุ้ง']]]) {
       if(filters[key]==='yes'){add(yes);add(no,true);}if(filters[key]==='no')add(no);
     }
@@ -72,7 +76,7 @@
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
       add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
-    return {p_org:org,p_words:words.map(like),p_category:filters.returnStyle==='RU'?like('Return Air Grille แบบวางแทนฝ้า T-Bar'):category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101))};
+    return {p_org:org,p_words:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101))};
   }
   function create(c) {
     const cache=new Map(),pending=new Map();let epoch=0;

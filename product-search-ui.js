@@ -16,6 +16,7 @@
   const equipment=document.createElement('div');equipment.className='price-equipment-row';
   for(const name of ['color','damper','screen']){
     const select=advanced.querySelector(`select[name="${name}"]`);
+    if(name==='color'){const custom=document.createElement('option');custom.value='custom';custom.textContent='สีตามแบบ';select.append(custom);}
     const oldField=select.closest('label');
     const choices=document.createElement('div');choices.className='field price-choice-filter';choices.setAttribute('role','group');
     const legend=document.createElement('span');legend.className='price-choice-heading';legend.textContent=name==='screen'?'มุ้งลวดกันแมลง':oldField.querySelector('span').textContent;
@@ -67,6 +68,7 @@
     #products .price-return-style,#products .price-choice-filter{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;padding:16px;border:1px solid #d6e8f3;border-radius:14px;background:#f7fbfe}
     #products .price-choice-heading{font-weight:600;color:#235675;white-space:normal;line-height:1.5}
     #products .price-return-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;min-width:0}
+    #products [aria-label="สี"] .price-return-options{grid-template-columns:repeat(4,minmax(0,1fr))}
     #products .price-return-option{justify-content:flex-start;min-height:48px;padding:10px 12px;gap:9px;line-height:1.4;background:#fff;transition:background .15s,border-color .15s}
     #products .price-return-option span{min-width:0}
     #products .price-return-option input{flex-shrink:0}
