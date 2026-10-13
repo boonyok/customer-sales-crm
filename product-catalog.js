@@ -27,6 +27,13 @@
     if(parentConditions.length)p.set('product.and','('+parentConditions.join(',')+')');
     const colors={aluminium:['aluminium','aluminum','อลูมิเนียม'],white:['white','สีขาว'],black:['black','สีดำ']};
     if(colors[filters.color])text(colors[filters.color]);
+    const styles={RT:['ปีกเรียบ'],RH:['ติดบานพับ'],RR:['ถอดหลุด'],RUU:['T-Bar ปิด-เปิดได้','T-Bar เปิด-ปิดได้']};
+    if(filters.returnStyle==='R')text(['ปีกเรียบ','ติดบานพับ','ถอดหลุด','วางแทนฝ้า T-Bar'],{negative:true});
+    else if(styles[filters.returnStyle])text(styles[filters.returnStyle]);
+    if(filters.returnStyle==='RU'){
+      p.set('product.and','('+[...parentConditions,'name.ilike.'+literal(pattern('วางแทนฝ้า T-Bar'))].join(',')+')');
+      text(['ปิด-เปิดได้','เปิด-ปิดได้'],{negative:true});
+    }
     for(const [key,yes,no] of [['damper',['with damper','มีตัวปรับลม'],['without damper','no damper','ไม่มีตัวปรับลม']],['screen',['with screen','with insect screen','มีมุ้ง'],['without screen','without insect screen','no screen','ไม่มีมุ้ง']]]) {
       if(filters[key]==='yes'){text(yes);text(no,{negative:true});}
       if(filters[key]==='no')text(no);
@@ -53,6 +60,10 @@
     const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
     const colors={aluminium:['aluminium','aluminum','อลูมิเนียม'],white:['white','สีขาว'],black:['black','สีดำ']};
     if(colors[filters.color])add(colors[filters.color]);
+    const styles={RT:['ปีกเรียบ'],RH:['ติดบานพับ'],RR:['ถอดหลุด'],RUU:['T-Bar ปิด-เปิดได้','T-Bar เปิด-ปิดได้']};
+    if(filters.returnStyle==='R')add(['ปีกเรียบ','ติดบานพับ','ถอดหลุด','วางแทนฝ้า T-Bar'],true);
+    else if(styles[filters.returnStyle])add(styles[filters.returnStyle]);
+    if(filters.returnStyle==='RU')add(['ปิด-เปิดได้','เปิด-ปิดได้'],true);
     for(const [key,yes,no] of [['damper',['with damper','มีตัวปรับลม'],['without damper','no damper','ไม่มีตัวปรับลม']],['screen',['with screen','with insect screen','มีมุ้ง'],['without screen','without insect screen','no screen','ไม่มีมุ้ง']]]) {
       if(filters[key]==='yes'){add(yes);add(no,true);}if(filters[key]==='no')add(no);
     }
@@ -61,7 +72,7 @@
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
       add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
-    return {p_org:org,p_words:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101))};
+    return {p_org:org,p_words:words.map(like),p_category:filters.returnStyle==='RU'?like('Return Air Grille แบบวางแทนฝ้า T-Bar'):category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101))};
   }
   function create(c) {
     const cache=new Map(),pending=new Map();let epoch=0;
