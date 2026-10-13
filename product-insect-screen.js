@@ -24,7 +24,7 @@ window.ProductInsectScreen={run,configure(c){
       button.onclick=async()=>{
         if(busy||!window.CRMAccess?.can('products','create'))return;
         const c=context,notice=message=>{screenStatus.textContent=message;c.notice(message);};busy=true;button.disabled=true;
-        try{const result=await run(c,notice);await c.refresh();notice('เพิ่มมุ้งลวดสำเร็จ '+result.added+' รายการ • ข้ามรหัสเดิม '+result.skipped+' • ไม่มีราคาฐาน '+result.unpriced);}
+        try{const result=await run(c,notice);await c.refresh();notice(result.added===0&&result.unpriced===0?'รายการติดมุ้งลวดครบแล้ว ไม่พบสินค้าฐานใหม่':'เพิ่มมุ้งลวดสำเร็จ '+result.added+' รายการ • ข้ามรหัสเดิม '+result.skipped+' • ไม่มีราคาฐาน '+result.unpriced);}
         catch(error){await c.refresh().catch(()=>{});notice('หยุดเพิ่มมุ้งลวด: '+error.message+' • กดอีกครั้งเพื่อทำต่อ รายการเดิมไม่ถูกเขียนทับ');}
         finally{busy=false;button.disabled=false;}
       };

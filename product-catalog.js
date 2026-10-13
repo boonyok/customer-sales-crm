@@ -53,20 +53,35 @@
     p.set('order','id.asc');p.set('limit',String(limit));if(cursor)p.set('id','gt.'+cursor);
     return '/rest/v1/product_variants?'+p.toString();
   }
-  function rpcFilters(org,{query='',category='all',filters={},cursor=null,limit=101}={}) {
+  function rpcFilters(org,{query='',category='all',filters={},cursor=null,limit=101,exactSku=false}={}) {
     const words=String(query).replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1x').trim().split(/\s+/).filter(Boolean);
     if(words.length>12||String(query).length>200)throw Error('คำค้นยาวเกินไป กรุณาใช้ไม่เกิน 12 คำ');
     const like=v=>'%'+String(v).replace(/[\\%_]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1%')+'%';
     const groups=[];
     const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
-    // Apply exact SKU equipment/style/color filters in PriceList.match. Older
-    // deployed RPCs ignore sku_only and would otherwise exclude valid SKUs.
+    const addSku=(patterns,negative=false)=>groups.push({patterns,negative,sku_only:true});
+    const colors={white:['%W'],black:['%BK'],custom:['%T']};
+    if(colors[filters.color])addSku(colors[filters.color]);
+    if(filters.color==='aluminium')addSku(['%W','%BK','%T'],true);
+    if(['R','RT','RH','RR','RU','RUU'].includes(filters.returnStyle)){
+      addSku([filters.returnStyle+'_%']);
+      if(filters.returnStyle==='R')addSku(['RU%','RT%','RH%','RR%'],true);
+      if(filters.returnStyle==='RU')addSku(['RUU%'],true);
+    }
+    const ownFamilies=['Return Air','Exhaust Air','Fresh Air'].includes(category)||Boolean(filters.returnStyle);
+    if(ownFamilies){
+      if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','FZLD%','FZSD%'],filters.damper==='no');
+      if(filters.screen)addSku(['%Ins%'],filters.screen==='no');
+    }
+    const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
+    const dimensionPattern=ownFamilies&&filters.width&&filters.length?'%'+toInch(filters.width)+'I'+toInch(filters.length)+'%':null;
     for(const value of [filters.width,filters.length].filter(Boolean)) {
       const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
-      add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
+      if(!dimensionPattern)add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
-    return {p_org:org,p_words:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101))};
+    const exact=exactSku&&window.ReturnAirCode.parse(query)?String(query).trim():null;
+    return {p_org:org,p_words:exact?[]:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101)),p_exact_sku:exact,p_dimension_sku_pattern:dimensionPattern};
   }
   function create(c) {
     const cache=new Map(),pending=new Map();let epoch=0;
@@ -79,7 +94,7 @@
         const task=(async()=>{
           // The read-only RPC checks the same organization/view permission once,
           // then selects <=101 matching rows and only their latest prices.
-          const raw=await c.request('/rest/v1/rpc/crm_search_product_page',{method:'POST',body:JSON.stringify(payload)});
+          const raw=await c.request('/rest/v1/rpc/crm_search_product_page_v2',{method:'POST',body:JSON.stringify(payload)});
           if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
           if(!Array.isArray(raw))throw Error('โหลดสินค้าไม่สำเร็จ');
           const size=payload.p_limit-1,more=raw.length>size,page=raw.slice(0,size);
@@ -97,7 +112,7 @@
   const prev=pager.querySelector('[data-product-prev]'),next=pager.querySelector('[data-product-next]'),status=pager.querySelector('[data-product-page]');
   function paint(){
     if(!service)return;
-    body.innerHTML=current.map(p=>`<tr data-edit-product="${escape(p.id)}" tabindex="0" aria-label="แก้ไขสินค้า ${escape(p.sku)}"><td><strong>${escape(p.sku)}</strong></td><td>${escape(p.name)}</td><td>${escape(p.size)}</td><td>฿ ${escape(p.price)}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:32px">'+(busy?'กำลังค้นหาสินค้า…':'ไม่พบสินค้า')+'</td></tr>';
+    body.innerHTML=current.map(p=>`<tr data-edit-product="${escape(p.id)}" tabindex="0" aria-label="แก้ไขสินค้า ${escape(p.sku)}"><td><strong>${escape(p.sku)}</strong></td><td>${escape(p.name)}</td><td>${escape(p.size)}</td><td>฿ ${escape(Number(p.price).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2}))}</td><td>${badge(p.status)}</td><td>${productDeleteButton(p)}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;padding:32px">'+(busy?'กำลังค้นหาสินค้า…':'ไม่พบสินค้า')+'</td></tr>';
     prev.disabled=busy||offset===0;next.disabled=busy||!more;
     if(!busy)status.textContent=current.length?`แสดง ${offset+1}–${offset+current.length} รายการ · หน้า ${Math.floor(offset/100)+1}${more?' · มีรายการถัดไป':''}`:'ไม่พบรายการ • กด Enter เพื่อค้นหาอีกครั้ง';
   }

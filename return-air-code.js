@@ -10,7 +10,7 @@
     if(base===null||base===undefined||base==='')throw Error('ไม่มีราคาฐาน');
     const cents=Math.round(Number(base)*100);
     if(!Number.isSafeInteger(cents)||cents<=0)throw Error('ราคาฐานต้องมากกว่า 0');
-    return (cents+Math.max(Math.round(cents*15/100),7000))/100;
+    return Math.round((cents+Math.max(cents*15/100,7000))/100);
   }
   function matchesEquipment(product,filters){
     const p=parse(product.sku);if(!p)return null;

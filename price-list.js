@@ -56,7 +56,7 @@
       let more=false;const target=resultRows.length+100;
       // Bound each interaction to <=500 candidates. Never wait for the catalog.
       for(let page=0;page<5;page++){
-        const result=await context.search({query:searchFilters.query,category:searchCategory,filters:searchFilters,cursor:nextCursor,offset:nextOffset});
+        const result=await context.search({query:searchFilters.query,category:searchCategory,filters:searchFilters,cursor:nextCursor,offset:nextOffset,exactSku:true});
         if(run!==generation)return;
         const start=nextOffset;nextOffset=result.next;nextCursor=result.nextCursor;more=result.more;
         for(let i=0;i<result.rows.length;i++){
@@ -66,7 +66,7 @@
         if(!more||resultRows.length>=target)break;
       }
       status.textContent=resultRows.length?`แสดง ${resultRows.length.toLocaleString('th-TH')} รายการ${more?' • ยังมีรายการเพิ่มเติม':''}`:(more?'ยังไม่พบในชุดนี้ • กดค้นหาต่อเพื่อดูรายการเพิ่มเติม':'ไม่พบสินค้าตามเงื่อนไข');
-      results.innerHTML=resultRows.map(p=>`<article class="price-result"><small>${escape(p.sku)}</small><h3>${escape(p.name)}</h3><p>${escape(p.size)}</p><strong>฿ ${Number(p.price).toLocaleString('th-TH',{minimumFractionDigits:2})}</strong><small>ราคาก่อน VAT และก่อนหักส่วนลด / ${escape(p.unit||'ชิ้น')}</small></article>`).join('');
+      results.innerHTML=resultRows.map(p=>`<article class="price-result"><small>${escape(p.sku)}</small><h3>${escape(p.name)}</h3><p>${escape(p.size)}</p><strong>฿ ${Number(p.price).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2})}</strong><small>ราคาก่อน VAT และก่อนหักส่วนลด / ${escape(p.unit||'ชิ้น')}</small></article>`).join('');
       if(more){const button=document.createElement('button');button.type='button';button.className='ghost';button.dataset.priceMore='';button.textContent='ค้นหาต่อ / แสดงเพิ่ม';button.onclick=()=>search(true);results.append(button);}
     }catch(error){if(run===generation){status.textContent='ค้นหาไม่สำเร็จ: '+error.message;const button=document.createElement('button');button.type='button';button.className='ghost';button.textContent='ลองค้นหาอีกครั้ง';button.onclick=()=>search();results.append(button);}}
   }
