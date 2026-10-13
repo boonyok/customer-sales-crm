@@ -7,7 +7,7 @@
   details.replaceWith(advanced);
   // Show detailed filters only after choosing a product category.
   advanced.id='price-category-filters';
-  advanced.append(page.querySelector('.price-actions'));
+  // Keep search/reset visible even when searching directly by SKU.
   advanced.hidden=true;
   const returnStyle=document.createElement('div');returnStyle.className='field price-return-style';returnStyle.hidden=true;returnStyle.setAttribute('role','group');returnStyle.setAttribute('aria-label','รูปแบบสินค้า');
   const returnChoices=[['R','เปิดห้อย'],['RT','เปิดห้อย ปีกเรียบ'],['RH','ติดบานพับ'],['RR','ถอดหลุด'],['RU','วางแทนฝ้า T-Bar'],['RUU','วางแทนฝ้า T-Bar เปิด-ปิดได้']];

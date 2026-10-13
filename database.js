@@ -320,6 +320,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>à
     catalogPageWasActive=false;
     catalogService=window.ProductCatalogUI.configure({request,currentOrg:()=>orgId,setRows:rows=>{state.products=rows;},notice:showProductDeleteNotice});
     window.PriceList?.configure({search:options=>catalogService.search(options)});
+    window.ProductInsectScreen?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,refresh:async()=>{catalogService.clear();await window.ProductCatalogUI.load(true,true);}});
     window.ProductEdit?.configure({request,currentOrg:()=>orgId,products:()=>state.products,refresh:()=>{catalogService.clear();render();}});
     window.ProductImport?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,refresh:async()=>{catalogReadyOrg=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});
     window.ProductBulkDelete?.configure({request,currentOrg:()=>orgId,notice:showProductDeleteNotice,prepare:async()=>{if(catalogLoad)await catalogLoad.catch(()=>{});},refresh:async()=>{catalogReadyOrg=null;lastDeletedProduct=null;await syncProducts();catalogReadyOrg=orgId;save();refreshProductList();}});

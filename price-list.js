@@ -23,11 +23,14 @@
     const text=normalize([p.sku,p.name,p.size].join(' '));
     if(f.query&&!normalize(f.query).trim().split(/\s+/).every(word=>text.includes(word)))return false;
     if(category!=='all'&&!String(p.name).toLowerCase().includes(category.toLowerCase()))return false;
-    if(f.returnStyle&&String(p.sku).trim().toUpperCase().match(/^(RUU|RU|RT|RH|RR|R)D?\d/)?.[1]!==f.returnStyle)return false;
+    const returnCode=window.ReturnAirCode.parse(p.sku);
+    const equipment=window.ReturnAirCode.matchesEquipment(p,f);
+    if(equipment===false)return false;
+    if(f.returnStyle&&!returnCode)return false;
     const sku=String(p.sku).trim().toUpperCase();
     const color=/BK$/.test(sku)?'black':/W$/.test(sku)?'white':/T$/.test(sku)?'custom':/\d$/.test(sku)?'aluminium':null;
     if(f.color&&f.color!==color)return false;
-    for(const [key,yes,no] of [['damper',/with damper|มีตัวปรับลม/,/without damper|no damper|ไม่มีตัวปรับลม/],['screen',/with (?:insect )?screen|มีมุ้ง/,/without (?:insect )?screen|no screen|ไม่มีมุ้ง/]]){
+    for(const [key,yes,no] of (returnCode?[]:[['damper',/with damper|w\/vd|มีตัวปรับลม/,/without damper|no damper|ไม่มีตัวปรับลม/],['screen',/with (?:insect )?screen|w\/ins|ติดมุ้ง|มีมุ้ง/,/without (?:insect )?screen|no screen|ไม่มีมุ้ง/]])){
       if(f[key]==='yes'&&(!yes.test(text)||no.test(text)))return false;
       if(f[key]==='no'&&!no.test(text))return false;
     }

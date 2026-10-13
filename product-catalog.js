@@ -59,18 +59,8 @@
     const like=v=>'%'+String(v).replace(/[\\%_]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1%')+'%';
     const groups=[];
     const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
-    const addSku=(patterns,negative=false)=>groups.push({patterns,negative,sku_only:true});
-    const colors={white:['%W'],black:['%BK'],custom:['%T']};
-    if(colors[filters.color])addSku(colors[filters.color]);
-    if(filters.color==='aluminium')addSku(['%W','%BK','%T'],true);
-    if(['R','RT','RH','RR','RU','RUU'].includes(filters.returnStyle)){
-      addSku([filters.returnStyle+'_%']);
-      if(filters.returnStyle==='R')addSku(['RU%','RT%','RH%','RR%'],true);
-      if(filters.returnStyle==='RU')addSku(['RUU%'],true);
-    }
-    for(const [key,yes,no] of [['damper',['with damper','มีตัวปรับลม'],['without damper','no damper','ไม่มีตัวปรับลม']],['screen',['with screen','with insect screen','มีมุ้ง'],['without screen','without insect screen','no screen','ไม่มีมุ้ง']]]) {
-      if(filters[key]==='yes'){add(yes);add(no,true);}if(filters[key]==='no')add(no);
-    }
+    // Apply exact SKU equipment/style/color filters in PriceList.match. Older
+    // deployed RPCs ignore sku_only and would otherwise exclude valid SKUs.
     for(const value of [filters.width,filters.length].filter(Boolean)) {
       const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
