@@ -9,23 +9,27 @@
   advanced.id='price-category-filters';
   advanced.append(page.querySelector('.price-actions'));
   advanced.hidden=true;
-  const returnStyle=document.createElement('fieldset');returnStyle.className='field price-return-style';returnStyle.hidden=true;
+  const returnStyle=document.createElement('div');returnStyle.className='field price-return-style';returnStyle.hidden=true;returnStyle.setAttribute('role','group');returnStyle.setAttribute('aria-label','รูปแบบสินค้า');
   const returnChoices=[['R','เปิดห้อย'],['RT','เปิดห้อย ปีกเรียบ'],['RH','ติดบานพับ'],['RR','ถอดหลุด'],['RU','วางแทนฝ้า T-Bar'],['RUU','วางแทนฝ้า T-Bar เปิด-ปิดได้']];
-  returnStyle.innerHTML='<legend>รูปแบบสินค้า</legend><div class="price-return-options">'+returnChoices.map(([value,label])=>`<label class="price-return-option"><input type="radio" name="returnStyle" value="${value}"><span>${label}</span></label>`).join('')+'</div>';
+  returnStyle.innerHTML='<span class="price-choice-heading">รูปแบบสินค้า</span><div class="price-return-options">'+returnChoices.map(([value,label])=>`<label class="price-return-option"><input type="radio" name="returnStyle" value="${value}"><span>${label}</span></label>`).join('')+'</div>';
   advanced.querySelector('.price-fields').prepend(returnStyle);
+  const equipment=document.createElement('div');equipment.className='price-equipment-row';
   for(const name of ['color','damper','screen']){
     const select=advanced.querySelector(`select[name="${name}"]`);
     const oldField=select.closest('label');
-    const choices=document.createElement('fieldset');choices.className='field price-choice-filter';
-    const legend=document.createElement('legend');legend.textContent=name==='screen'?'มุ้งลวดกันแมลง':oldField.querySelector('span').textContent;
+    const choices=document.createElement('div');choices.className='field price-choice-filter';choices.setAttribute('role','group');
+    const legend=document.createElement('span');legend.className='price-choice-heading';legend.textContent=name==='screen'?'มุ้งลวดกันแมลง':oldField.querySelector('span').textContent;
+    choices.setAttribute('aria-label',legend.textContent);
     const options=document.createElement('div');options.className='price-return-options';
     for(const option of select.options){
+      if(option.value==='')continue;
       const label=document.createElement('label');label.className='price-return-option';
       const input=document.createElement('input');input.type='radio';input.name=name;input.value=option.value;input.checked=option.selected;input.defaultChecked=option.selected;
       const text=document.createElement('span');text.textContent=option.textContent;
       label.append(input,text);options.append(label);
     }
     choices.append(legend,options);oldField.replaceWith(choices);
+    if(name==='color')choices.after(equipment);else equipment.append(choices);
   }
   const categoryButtons=page.querySelectorAll('[data-category]');
   const showAdvanced=visible=>{
@@ -58,7 +62,6 @@
   style.textContent+='#product-data .product-search-toolbar{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:0}#product-data .product-search-box{flex:1;min-width:min(100%,320px)}#product-data .product-search-hint{margin:12px 0 0}@media(max-width:600px){#product-data .product-search-box{flex-basis:100%}}';
   style.textContent+='#products .price-advanced-search[hidden],#products .price-advanced-search .field[hidden]{display:none!important}';
   style.textContent+='#products .price-return-style{grid-column:1/-1;border:0;padding:0;margin:0;min-width:0}#products .price-return-style legend{padding:0;margin-bottom:10px}#products .price-return-options{display:flex;flex-wrap:wrap;gap:10px}#products .price-return-option{display:flex;align-items:center;gap:9px;min-height:44px;padding:10px 14px;border:1px solid #c6dfed;border-radius:10px;background:#fbfdff;cursor:pointer}#products .price-return-option input{width:18px;height:18px;min-height:0;margin:0;padding:0;accent-color:#087fac}#products .price-return-option:has(input:checked){background:#dff4ff;border-color:#098cc1;color:#07658b}#products .price-return-option:focus-within{outline:2px solid #139bc8;outline-offset:2px}';
-  style.textContent+='#products .price-return-options{justify-content:center}#products .price-return-style legend{width:100%;text-align:center}';
-  style.textContent+='#products .price-choice-filter{grid-column:1/-1;border:0;padding:0;margin:0;min-width:0}#products .price-choice-filter legend{width:100%;text-align:center;padding:0;margin-bottom:10px}';
+  style.textContent+='#products .price-return-options{justify-content:center}#products .price-return-style,#products .price-choice-filter{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:14px;border:0;padding:0;margin:0;min-width:0}#products .price-choice-heading{flex-shrink:0;white-space:nowrap}#products .price-equipment-row{grid-column:1/-1;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px 28px}#products .price-equipment-row .price-return-options{flex-wrap:nowrap}#products .price-equipment-row .price-choice-filter{flex:0 1 auto}@media(max-width:600px){#products .price-return-style{align-items:flex-start}#products .price-return-style .price-choice-heading{padding-top:12px}}';
   document.head.append(style);
 })();
