@@ -1,5 +1,5 @@
 (() => {
-  const categories = [['Return Air','Return Air Grille'],['Exhaust Air','Exhaust Air Grille'],['Supply Air','Supply Air Register'],['Square Ceiling','Square Ceiling Diffuser'],['Round Ceiling','Round Ceiling Diffuser'],['Linear Slot','Linear Slot Diffuser'],['Linear Bar','Linear Bar Grille'],['Volume Damper','Volume Damper']];
+  const categories = [['Return Air','Return Air Grille'],['Exhaust Air','Exhaust Air Grille'],['Fresh Air','Fresh Air Grille'],['Supply Air','Supply Air Register'],['Square Ceiling','Square Ceiling Diffuser'],['Round Ceiling','Round Ceiling Diffuser'],['Linear Slot','Linear Slot Diffuser'],['Linear Bar','Linear Bar Grille'],['Volume Damper','Volume Damper']];
   const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const page = document.getElementById('products');
   const data = document.createElement('section'); data.id='product-data';data.className='page document-workspace data-workspace';
@@ -22,6 +22,7 @@
     const normalize=value=>String(value??'').toLowerCase().replace(/[×✕]/g,'x').replace(/\s*x\s*/g,'x');
     const text=normalize([p.sku,p.name,p.size].join(' '));
     if(f.query&&!normalize(f.query).trim().split(/\s+/).every(word=>text.includes(word)))return false;
+    if(window.ReturnAirCode.parse(f.query)&&normalize(p.sku).trim()!==normalize(f.query).trim())return false;
     if(category!=='all'&&!String(p.name).toLowerCase().includes(category.toLowerCase()))return false;
     const returnCode=window.ReturnAirCode.parse(p.sku);
     const equipment=window.ReturnAirCode.matchesEquipment(p,f);
