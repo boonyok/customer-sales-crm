@@ -42,9 +42,9 @@
           showResults(items,q);
         }catch(error){
           if(version!==revision||root.isConnected===false)return;
-          summary.textContent='ค้นหาสินค้าไม่สำเร็จ: '+error.message+' — ลองพิมพ์รหัสอีกครั้ง';
+          summary.textContent=/statement timeout/i.test(error.message)?'ค้นหานานเกินไป กรุณาพิมพ์รหัสให้ครบแล้วลองอีกครั้ง':'ค้นหาสินค้าไม่สำเร็จ: '+error.message+' — ลองพิมพ์รหัสอีกครั้ง';
         }
-      },200);
+      },350);
     };
     input.addEventListener('input',search);
     input.addEventListener('keydown',event=>{
