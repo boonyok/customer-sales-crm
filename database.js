@@ -77,13 +77,11 @@
     if(!session||!targetOrg||orgId!==targetOrg)throw Error('องค์กรเปลี่ยน กรุณาเปิดเอกสารใหม่');
     if(!q)return [];
     if(q.length>100||!/^[A-Z0-9_-]+$/.test(q))throw Error('รหัสสินค้าใช้ตัวอักษรอังกฤษ ตัวเลข ขีดกลาง หรือขีดล่าง');
-    const pattern=q.replace(/_/g,'\\_')+'*';
-    const rows=await request('/rest/v1/product_variants?select=id,sku,label,is_active,product:products!inner(id,code,name,unit,is_active),variant_prices(price,starts_on)&product.organization_id=eq.'+encodeURIComponent(targetOrg)+'&is_active=eq.true&product.is_active=eq.true&sku=ilike.'+encodeURIComponent(pattern)+'&order=sku.asc&limit=8');
+    const rows=await request('/rest/v1/rpc/crm_lookup_product_codes',{method:'POST',body:JSON.stringify({p_org:targetOrg,p_query:q})});
     if(orgId!==targetOrg)throw Error('องค์กรเปลี่ยน กรุณาเปิดเอกสารใหม่');
     if(!Array.isArray(rows))throw Error('โหลดสินค้าไม่สำเร็จ');
     return rows.map(variant=>{
-      const p=variant.product,price=(variant.variant_prices||[]).sort((a,b)=>String(b.starts_on).localeCompare(String(a.starts_on)))[0]?.price??0;
-      return {id:variant.id,productId:p.id,sku:variant.sku,name:p.name,unit:p.unit||'ชิ้น',size:variant.label,price:Number(price).toFixed(2),status:p.is_active?'ใช้งาน':'ปิดใช้งาน',isActive:variant.is_active};
+      return {id:variant.id,productId:variant.product_id,sku:variant.sku,name:variant.name,unit:variant.unit||'ชิ้น',size:variant.label,price:Number(variant.price??0).toFixed(2),status:variant.product_is_active?'ใช้งาน':'ปิดใช้งาน',isActive:true};
     });
   };
   let productTrash=[],productTrashOrg=null;
