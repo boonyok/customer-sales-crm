@@ -60,6 +60,7 @@
     const groups=[];
     const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
     const addSku=(patterns,negative=false)=>groups.push({patterns,negative,sku_only:true});
+    if(category==='Square Ceiling')addSku(['Q%']);
     const colors={white:['%W'],black:['%BK'],custom:['%T']};
     if(colors[filters.color])addSku(colors[filters.color]);
     if(filters.color==='aluminium')addSku(['%W','%BK','%T'],true);
@@ -68,9 +69,9 @@
       if(filters.returnStyle==='R')addSku(['RU%','RT%','RH%','RR%'],true);
       if(filters.returnStyle==='RU')addSku(['RUU%'],true);
     }
-    const ownFamilies=['Return Air','Exhaust Air','Fresh Air'].includes(category)||Boolean(filters.returnStyle);
+    const ownFamilies=['Return Air','Exhaust Air','Fresh Air','Square Ceiling'].includes(category)||Boolean(filters.returnStyle);
     if(ownFamilies){
-      if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','FZLD%','FZSD%'],filters.damper==='no');
+      if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','QD%','FZLD%','FZSD%'],filters.damper==='no');
       if(filters.screen)addSku(['%Ins%'],filters.screen==='no');
     }
     const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
@@ -81,7 +82,7 @@
       if(!dimensionPattern)add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
     const exact=exactSku&&window.ReturnAirCode.parse(query)?String(query).trim():null;
-    return {p_org:org,p_words:exact?[]:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101)),p_exact_sku:exact,p_dimension_sku_pattern:dimensionPattern};
+    return {p_org:org,p_words:exact?[]:words.map(like),p_category:category==='all'||category==='Square Ceiling'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101)),p_exact_sku:exact,p_dimension_sku_pattern:dimensionPattern};
   }
   function create(c) {
     const cache=new Map(),pending=new Map();let epoch=0;
