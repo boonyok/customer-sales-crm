@@ -42,7 +42,7 @@
     // Safe coarse filtering for dimensions; exact orientation/unit matching is
     // still applied by PriceList.match. Include cm rows to preserve rounding.
     for(const value of [filters.width,filters.length].filter(Boolean)) {
-      const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
+      const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
       const options=[String(n),String(n*25),String(n*2.5),'cm','ซม'];
       conditions.push('or('+options.map(v=>'label.ilike.'+literal(pattern(v))).join(',')+')');
@@ -76,10 +76,10 @@
       if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','QD%','FZLD%','FZSD%'],filters.damper==='no');
       if(filters.screen)addSku(['%Ins%'],filters.screen==='no');
     }
-    const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
+    const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
     const dimensionPattern=ownFamilies&&filters.width&&filters.length?'%'+toInch(filters.width)+'I'+toInch(filters.length)+'%':null;
     for(const value of [filters.width,filters.length].filter(Boolean)) {
-      const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Number(value)/25:Number(value);
+      const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
       if(!dimensionPattern)add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
@@ -90,7 +90,7 @@
 const squareCeilingCodes=options=>{
   const f=options.filters||{};
   if(!['Square Ceiling','Volume Damper'].includes(options.category)||!f.width||!f.length)return null;
-  const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Number(n)/25:Number(n);
+  const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Math.round(Number(n)/25):Number(n);
   const w=inch(f.width),l=inch(f.length);
   if(!Number.isInteger(w)||!Number.isInteger(l)||w<=0||l<=0)return null;
   if(options.category==='Volume Damper')return ['VD','VDS'].map(root=>`${root}${w}I${l}`);
