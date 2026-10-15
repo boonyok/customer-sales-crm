@@ -82,8 +82,21 @@
       if(!dimensionPattern)add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
     const exact=exactSku&&window.ReturnAirCode.parse(query)?String(query).trim():null;
-    return {p_org:org,p_words:exact?[]:words.map(like),p_category:category==='all'||category==='Square Ceiling'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101)),p_exact_sku:exact,p_dimension_sku_pattern:dimensionPattern};
+    return {p_org:org,p_words:exact?[]:words.map(like),p_category:category==='all'?null:like(category),p_groups:groups,p_cursor:cursor,p_limit:Math.min(101,Math.max(2,Number(limit)||101)),p_exact_sku:exact,p_dimension_sku_pattern:dimensionPattern};
   }
+// Exact catalog SKUs for a Square Ceiling Diffuser size; no records are created.
+const squareCeilingCodes=options=>{
+  const f=options.filters||{};
+  if(options.category!=='Square Ceiling'||!f.width||!f.length)return null;
+  const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Number(n)/25:Number(n);
+  const w=inch(f.width),l=inch(f.length);
+  if(!Number.isInteger(w)||!Number.isInteger(l)||w<=0||l<=0)return null;
+  const roots=f.damper==='yes'?['QD']:f.damper==='no'?['Q']:['Q','QD'];
+  const screens=f.screen==='yes'?['Ins']:f.screen==='no'?['']:['','Ins'];
+  const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
+  return roots.flatMap(root=>screens.flatMap(screen=>colors.map(color=>`${root}${w}I${l}${screen}${color}`)));
+};
+
   function create(c) {
     const cache=new Map(),pending=new Map();let epoch=0;
     return {
@@ -95,7 +108,9 @@
         const task=(async()=>{
           // The read-only RPC checks the same organization/view permission once,
           // then selects <=101 matching rows and only their latest prices.
-          const raw=await c.request('/rest/v1/rpc/crm_search_product_page_v2',{method:'POST',body:JSON.stringify(payload)});
+          const codes=squareCeilingCodes(options);
+          const raw=codes?(await Promise.all(codes.map(code=>c.request('/rest/v1/rpc/crm_lookup_product_codes',{method:'POST',body:JSON.stringify({p_org:org,p_query:code})})))).flat().filter(v=>codes.some(code=>code.toUpperCase()===String(v.sku).trim().toUpperCase())):
+            await c.request('/rest/v1/rpc/crm_search_product_page_v2',{method:'POST',body:JSON.stringify(payload)});
           if(org!==c.currentOrg()||version!==epoch)throw Error('ข้อมูลเปลี่ยน กรุณาค้นหาอีกครั้ง');
           if(!Array.isArray(raw))throw Error('โหลดสินค้าไม่สำเร็จ');
           const size=payload.p_limit-1,more=raw.length>size,page=raw.slice(0,size);
