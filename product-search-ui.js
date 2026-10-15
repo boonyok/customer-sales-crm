@@ -16,11 +16,11 @@
   returnStyle.innerHTML='<span class="price-choice-heading">รูปแบบสินค้า</span><div class="price-return-options">'+returnChoices.map(([value,label])=>`<label class="price-return-option"><input type="radio" name="returnStyle" value="${value}"><span>${label}</span></label>`).join('')+'</div>';
   advanced.querySelector('.price-fields').prepend(returnStyle);
   const equipment=document.createElement('div');equipment.className='price-equipment-row';
-  for(const name of ['color','damper','screen']){
+  for(const name of ['color','damper','screen','unit']){
     const select=advanced.querySelector(`select[name="${name}"]`);
     if(name==='color'){const custom=document.createElement('option');custom.value='custom';custom.textContent='สีตามแบบ';select.append(custom);}
     const oldField=select.closest('label');
-    const choices=document.createElement('div');choices.className='field price-choice-filter';choices.setAttribute('role','group');
+    const choices=document.createElement('div');choices.className=name==='unit'?'field price-unit-choice':'field price-choice-filter';choices.setAttribute('role','group');
     const legend=document.createElement('span');legend.className='price-choice-heading';legend.textContent=name==='screen'?'มุ้งลวดกันแมลง':oldField.querySelector('span').textContent;
     choices.setAttribute('aria-label',legend.textContent);
     const options=document.createElement('div');options.className='price-return-options';
@@ -32,7 +32,7 @@
       label.append(input,text);options.append(label);
     }
     choices.append(legend,options);oldField.replaceWith(choices);
-    if(name==='color')choices.after(equipment);else equipment.append(choices);
+    if(name==='color')choices.after(equipment);else if(name!=='unit')equipment.append(choices);
   }
   const categoryButtons=page.querySelectorAll('[data-category]');
   const showAdvanced=visible=>{
@@ -53,7 +53,7 @@
     },true);
   });
   page.querySelector('#price-search-form').addEventListener('reset',()=>showAdvanced(false));
-  page.querySelector('.price-search').before(document.getElementById('product-unit-converter'));
+  document.getElementById('product-unit-converter')?.remove();
   const input=document.getElementById('product-search'),box=input.closest('.search'),toolbar=box.closest('.page-toolbar');
   box.hidden=false;box.classList.add('product-search-box');toolbar.classList.add('product-search-toolbar');
   input.type='search';input.setAttribute('aria-label','ค้นหาข้อมูลสินค้า');input.placeholder='พิมพ์รหัส ชื่อสินค้า หรือขนาด เช่น R48I24 / Return Air / 24x48';
@@ -87,5 +87,6 @@
     @media(max-width:1050px){#products .price-equipment-row{grid-template-columns:1fr}#products .price-equipment-row .price-choice-filter{grid-template-columns:110px minmax(0,1fr)}}
     @media(max-width:600px){#products .price-return-style,#products .price-choice-filter,#products .price-equipment-row .price-choice-filter{grid-template-columns:86px minmax(0,1fr);gap:10px;padding:12px}#products .price-return-style .price-choice-heading{padding-top:0}#products .price-return-style .price-return-options{grid-template-columns:repeat(2,minmax(0,1fr))}#products .price-return-option{padding:9px 8px;font-size:12px}}
   `;
+  style.textContent+='#products .price-unit-choice .price-return-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#products .price-unit-choice .price-return-option{justify-content:center;padding:10px 6px;gap:6px;min-height:46px}#products .price-unit-choice>.price-choice-heading{display:block;margin-bottom:8px;font-weight:400}';
   document.head.append(style);
 })();
