@@ -23,7 +23,9 @@
     const text=normalize([p.sku,p.name,p.size].join(' '));
     if(f.query&&!normalize(f.query).trim().split(/\s+/).every(word=>text.includes(word)))return false;
     if(window.ReturnAirCode.parse(f.query)&&normalize(p.sku).trim()!==normalize(f.query).trim())return false;
-    if(category!=='all'&&!String(p.name).toLowerCase().includes(category.toLowerCase()))return false;
+    const squareCode=/^QD?\d/i.test(String(p.sku).trim());
+    if(category==='Square Ceiling'&&!squareCode)return false;
+    if(category!=='all'&&category!=='Square Ceiling'&&!String(p.name).toLowerCase().includes(category.toLowerCase()))return false;
     const returnCode=window.ReturnAirCode.parse(p.sku);
     const equipment=window.ReturnAirCode.matchesEquipment(p,f);
     if(equipment===false)return false;
@@ -31,7 +33,11 @@
     const sku=String(p.sku).trim().toUpperCase();
     const color=/BK$/.test(sku)?'black':/W$/.test(sku)?'white':/T$/.test(sku)?'custom':/\d$/.test(sku)?'aluminium':null;
     if(f.color&&f.color!==color)return false;
-    for(const [key,yes,no] of (returnCode?[]:[['damper',/with damper|w\/vd|มีตัวปรับลม/,/without damper|no damper|ไม่มีตัวปรับลม/],['screen',/with (?:insect )?screen|w\/ins|ติดมุ้ง|มีมุ้ง/,/without (?:insect )?screen|no screen|ไม่มีมุ้ง/]])){
+    if(squareCode){
+      if(f.damper&&(f.damper==='yes')!==/^QD\d/i.test(sku))return false;
+      if(f.screen&&(f.screen==='yes')!==(/ins/i.test(sku)||/w\/ins|ติดมุ้ง|มีมุ้ง/.test(text)))return false;
+    }
+    for(const [key,yes,no] of ((returnCode||squareCode)?[]:[['damper',/with damper|w\/vd|มีตัวปรับลม/,/without damper|no damper|ไม่มีตัวปรับลม/],['screen',/with (?:insect )?screen|w\/ins|ติดมุ้ง|มีมุ้ง/,/without (?:insect )?screen|no screen|ไม่มีมุ้ง/]])){
       if(f[key]==='yes'&&(!yes.test(text)||no.test(text)))return false;
       if(f[key]==='no'&&!no.test(text))return false;
     }
