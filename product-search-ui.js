@@ -5,6 +5,8 @@
   const heading=document.createElement('h4');heading.textContent='ค้นหาแบบระบุรายละเอียด';advanced.append(heading);
   for(const child of [...details.children])if(child.tagName!=='SUMMARY')advanced.append(child);
   details.replaceWith(advanced);
+  // Dimensions first, unit last: visual order and keyboard order stay aligned.
+  advanced.querySelector('.price-fields').append(advanced.querySelector('[name="unit"]').closest('label'));
   // Show detailed filters only after choosing a product category.
   advanced.id='price-category-filters';
   // Keep search/reset visible even when searching directly by SKU.
