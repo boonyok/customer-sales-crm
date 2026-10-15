@@ -54,6 +54,7 @@
     return '/rest/v1/product_variants?'+p.toString();
   }
   function rpcFilters(org,{query='',category='all',filters={},cursor=null,limit=101,exactSku=false}={}) {
+    if(category==='Volume Damper')filters={...filters,color:'',damper:'',screen:'',returnStyle:''};
     const words=String(query).replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1x').trim().split(/\s+/).filter(Boolean);
     if(words.length>12||String(query).length>200)throw Error('คำค้นยาวเกินไป กรุณาใช้ไม่เกิน 12 คำ');
     const like=v=>'%'+String(v).replace(/[\\%_]/g,'\\$&').replace(/(\d)\s*[x×✕]\s*(?=\d)/gi,'$1%')+'%';
@@ -61,6 +62,7 @@
     const add=(values,negative=false,label_only=false)=>groups.push({patterns:values.map(like),negative,label_only});
     const addSku=(patterns,negative=false)=>groups.push({patterns,negative,sku_only:true});
     if(category==='Square Ceiling')addSku(['Q%']);
+    if(category==='Volume Damper')addSku(['VD%']);
     const colors={white:['%W'],black:['%BK'],custom:['%T']};
     if(colors[filters.color])addSku(colors[filters.color]);
     if(filters.color==='aluminium')addSku(['%W','%BK','%T'],true);
@@ -87,10 +89,11 @@
 // Exact catalog SKUs for a Square Ceiling Diffuser size; no records are created.
 const squareCeilingCodes=options=>{
   const f=options.filters||{};
-  if(options.category!=='Square Ceiling'||!f.width||!f.length)return null;
+  if(!['Square Ceiling','Volume Damper'].includes(options.category)||!f.width||!f.length)return null;
   const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Number(n)/25:Number(n);
   const w=inch(f.width),l=inch(f.length);
   if(!Number.isInteger(w)||!Number.isInteger(l)||w<=0||l<=0)return null;
+  if(options.category==='Volume Damper')return ['VD','VDS'].map(root=>`${root}${w}I${l}`);
   const roots=f.damper==='yes'?['QD']:f.damper==='no'?['Q']:['Q','QD'];
   const screens=f.screen==='yes'?['Ins']:f.screen==='no'?['']:['','Ins'];
   const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
