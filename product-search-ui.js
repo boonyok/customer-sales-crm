@@ -88,5 +88,7 @@
     @media(max-width:600px){#products .price-return-style,#products .price-choice-filter,#products .price-equipment-row .price-choice-filter{grid-template-columns:86px minmax(0,1fr);gap:10px;padding:12px}#products .price-return-style .price-choice-heading{padding-top:0}#products .price-return-style .price-return-options{grid-template-columns:repeat(2,minmax(0,1fr))}#products .price-return-option{padding:9px 8px;font-size:12px}}
   `;
   style.textContent+='#products .price-unit-choice .price-return-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#products .price-unit-choice .price-return-option{justify-content:center;padding:10px 6px;gap:6px;min-height:46px}#products .price-unit-choice>.price-choice-heading{display:block;margin-bottom:8px;font-weight:400}';
+  advanced.querySelectorAll('input[name="width"],input[name="length"]').forEach(input=>input.closest('.field').classList.add('price-size-field'));
+  style.textContent+='#products .price-size-field>span{font-size:16px;font-weight:700;color:#08678d}#products .price-size-field>input{min-height:58px;background:#edf9ff;border:2px solid #169dc6;border-radius:12px;font-size:22px;font-weight:650;color:#104960;padding:12px 16px;box-shadow:0 3px 10px #0085b010}#products .price-size-field>input::placeholder{font-size:16px;font-weight:400;color:#6b8da1}#products .price-size-field>input:focus{outline:none;border-color:#007ca8;background:#fff;box-shadow:0 0 0 4px #0a9bcb26}#products .price-unit-choice{align-self:end}';
   document.head.append(style);
 })();
