@@ -2,7 +2,7 @@
   const style=document.createElement('style');style.textContent='[data-access-hidden="true"]{display:none!important}';document.head.append(style);
   const pages={dashboard:'dashboard',customers:'customers',products:'products',quotations:'quotation',invoices:'billing_note',billing:'billing_note','tax-invoices':'tax_invoice','tax-invoice-control':'tax_invoice','tax-invoice-trash':'tax_invoice','delivery-notes':'delivery_note','cash-bills':'cash_bill','company-profile':'company',members:'members',settings:'settings'};
   pages['product-data']='products';
-  let role=null,permissions={},observer;
+  let role=null,permissions={},observer,initialRoutePending=true;
   const can=(resource,action='view')=>role==='admin'||permissions[resource]?.[action]===true;
   const pageAllowed=page=>can(pages[page]||page);
   const fallback=()=>Object.keys(pages).find(p=>pageAllowed(p)&&document.getElementById(p))||'products';
@@ -56,7 +56,8 @@
     role=access.role;permissions=window.MemberPermissions.normalize(role,access.permissions);
     refresh();
     if(!observer){observer=new MutationObserver(()=>refresh());observer.observe(document.body,{childList:true,subtree:true});}
-    const requested=location.hash.slice(1)||document.querySelector('.active-page')?.id;
+    const requested=initialRoutePending&&typeof initialRequestedPage==='string'&&initialRequestedPage?initialRequestedPage:location.hash.slice(1)||document.querySelector('.active-page')?.id;
+    initialRoutePending=false;
     const page=pageAllowed(requested)&&document.getElementById(requested)?requested:fallback();
     window.go(page);history.replaceState(null,'','#'+page);
   }};
