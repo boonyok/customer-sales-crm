@@ -37,6 +37,8 @@
     choices.append(legend,options);oldField.replaceWith(choices);
     if(name==='color')choices.after(equipment);else if(name!=='unit')equipment.append(choices);
   }
+  const firstSize=advanced.querySelector('input[name="width"]'),secondSize=advanced.querySelector('input[name="length"]');
+  const firstSizeLabel=firstSize.closest('.field').querySelector('span'),firstSizeTitle=firstSizeLabel.textContent;
   const categoryButtons=page.querySelectorAll('[data-category]');
   const showAdvanced=visible=>{
     advanced.hidden=!visible;
@@ -48,6 +50,10 @@
     button.addEventListener('click',()=>showAdvanced(true));
     button.addEventListener('click',()=>{
       const isSlot=button.dataset.category==='Linear Slot';
+      advanced.classList.toggle('price-linear-slot',isSlot);
+      firstSizeLabel.textContent=isSlot?'ความยาว':firstSizeTitle;
+      secondSize.closest('.field').hidden=isSlot;secondSize.disabled=isSlot;
+      if(isSlot)secondSize.value='';
       slotStyle.hidden=!isSlot;slotStyle.querySelectorAll('input').forEach(input=>{input.disabled=!isSlot;if(!isSlot)input.checked=false;});
       const isReturn=button.dataset.category==='Return Air';
       const isVolume=button.dataset.category==='Volume Damper';
@@ -97,5 +103,6 @@
   style.textContent+='#products .price-size-field>span{font-size:16px;font-weight:700;color:#08678d}#products .price-size-field>input{min-height:58px;background:#edf9ff;border:2px solid #169dc6;border-radius:12px;font-size:22px;font-weight:650;color:#104960;padding:12px 16px;box-shadow:0 3px 10px #0085b010}#products .price-size-field>input::placeholder{font-size:16px;font-weight:400;color:#6b8da1}#products .price-size-field>input:focus{outline:none;border-color:#007ca8;background:#fff;box-shadow:0 0 0 4px #0a9bcb26}#products .price-unit-choice{align-self:end}';
   style.textContent+='#products .price-equipment-row:has(>.field[hidden]){grid-template-columns:1fr}';
   style.textContent+='#products .price-slot-style .price-return-options{grid-template-columns:repeat(6,minmax(0,1fr))}#products .price-slot-style .price-return-option{justify-content:center;white-space:nowrap;padding:10px 6px}@media(max-width:1050px){#products .price-slot-style .price-return-options{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:600px){#products .price-slot-style .price-return-options{grid-template-columns:repeat(2,minmax(0,1fr))}}';
+  style.textContent+='#products .price-linear-slot .price-size-field:has(input[name="width"]){grid-column:span 2}@media(max-width:700px){#products .price-linear-slot .price-size-field:has(input[name="width"]){grid-column:auto}}';
   document.head.append(style);
 })();
