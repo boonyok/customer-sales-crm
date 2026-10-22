@@ -46,7 +46,7 @@
     button.addEventListener('click',()=>{
       const isReturn=button.dataset.category==='Return Air';
       const isVolume=button.dataset.category==='Volume Damper';
-      advanced.querySelectorAll('.price-choice-filter').forEach(field=>{const hidden=isVolume||(button.dataset.category==='Square Ceiling'&&Boolean(field.querySelector('[name="screen"]')));field.hidden=hidden;field.querySelectorAll('input').forEach(input=>{input.disabled=hidden;if(hidden)input.checked=false;});});
+      advanced.querySelectorAll('.price-choice-filter').forEach(field=>{const hidden=isVolume||(['Square Ceiling','Linear Bar','Supply Air','Round Ceiling','Linear Slot'].includes(button.dataset.category)&&Boolean(field.querySelector('[name="screen"]')));field.hidden=hidden;field.querySelectorAll('input').forEach(input=>{input.disabled=hidden;if(hidden)input.checked=false;});});
       equipment.hidden=isVolume;
       returnStyle.hidden=!isReturn;
       if(!isReturn)returnStyle.querySelectorAll('input').forEach(input=>input.checked=false);
