@@ -23,6 +23,8 @@
     const text=normalize([p.sku,p.name,p.size].join(' '));
     if(f.query&&!normalize(f.query).trim().split(/\s+/).every(word=>text.includes(word)))return false;
     if(window.ReturnAirCode.parse(f.query)&&normalize(p.sku).trim()!==normalize(f.query).trim())return false;
+    const linearSlot=String(p.sku).trim().match(/^L([1-6])-\d+C(?:W|BK|T)?$/i);
+    if(category==='Linear Slot'&&f.slot&&linearSlot?.[1]!==String(f.slot))return false;
     const squareCode=/^QD?\d/i.test(String(p.sku).trim());
     if(category==='Square Ceiling'&&!squareCode)return false;
     if(category==='Volume Damper'&&!/^VDS?\d/i.test(String(p.sku).trim()))return false;
@@ -33,7 +35,7 @@
     if(equipment===false)return false;
     if(f.returnStyle&&!returnCode)return false;
     const sku=String(p.sku).trim().toUpperCase();
-    const color=/BK$/.test(sku)?'black':/W$/.test(sku)?'white':/T$/.test(sku)?'custom':/\d$/.test(sku)?'aluminium':null;
+    const color=/BK$/.test(sku)?'black':/W$/.test(sku)?'white':/T$/.test(sku)?'custom':(linearSlot||/\d$/.test(sku))?'aluminium':null;
     if(f.color&&f.color!==color)return false;
     if(squareCode){
       if(f.damper&&(f.damper==='yes')!==/^QD\d/i.test(sku))return false;
