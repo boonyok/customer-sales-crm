@@ -791,6 +791,6 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>à
     };
     start();
   }
-  const initialPage=location.hash.slice(1);
+  const initialPage=typeof initialRequestedPage==='string'?initialRequestedPage:location.hash.slice(1);
   if(pageMeta[initialPage]&&document.getElementById(initialPage))setTimeout(()=>window.go?.(initialPage),0);
 })();
