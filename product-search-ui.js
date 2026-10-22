@@ -15,6 +15,9 @@
   const returnChoices=[['R','เปิดห้อย'],['RT','เปิดห้อย ปีกเรียบ'],['RH','ติดบานพับ'],['RR','ถอดหลุด'],['RU','วางแทนฝ้า T-Bar'],['RUU','วางแทนฝ้า T-Bar เปิด-ปิดได้']];
   returnStyle.innerHTML='<span class="price-choice-heading">รูปแบบสินค้า</span><div class="price-return-options">'+returnChoices.map(([value,label])=>`<label class="price-return-option"><input type="radio" name="returnStyle" value="${value}"><span>${label}</span></label>`).join('')+'</div>';
   advanced.querySelector('.price-fields').prepend(returnStyle);
+  const slotStyle=document.createElement('div');slotStyle.className='field price-return-style price-slot-style';slotStyle.hidden=true;slotStyle.setAttribute('role','group');slotStyle.setAttribute('aria-label','จำนวน Slot');
+  slotStyle.innerHTML='<span class="price-choice-heading">จำนวน Slot</span><div class="price-return-options">'+[1,2,3,4,5,6].map(value=>'<label class="price-return-option"><input type="radio" name="slot" value="'+value+'" disabled><span>'+value+' Slot</span></label>').join('')+'</div>';
+  advanced.querySelector('.price-fields').prepend(slotStyle);
   const equipment=document.createElement('div');equipment.className='price-equipment-row';
   for(const name of ['color','damper','screen','unit']){
     const select=advanced.querySelector(`select[name="${name}"]`);
@@ -44,6 +47,8 @@
     button.setAttribute('aria-expanded','false');
     button.addEventListener('click',()=>showAdvanced(true));
     button.addEventListener('click',()=>{
+      const isSlot=button.dataset.category==='Linear Slot';
+      slotStyle.hidden=!isSlot;slotStyle.querySelectorAll('input').forEach(input=>{input.disabled=!isSlot;if(!isSlot)input.checked=false;});
       const isReturn=button.dataset.category==='Return Air';
       const isVolume=button.dataset.category==='Volume Damper';
       advanced.querySelectorAll('.price-choice-filter').forEach(field=>{const hidden=isVolume||(['Square Ceiling','Linear Bar','Supply Air','Round Ceiling','Linear Slot'].includes(button.dataset.category)&&Boolean(field.querySelector('[name="screen"]')));field.hidden=hidden;field.querySelectorAll('input').forEach(input=>{input.disabled=hidden;if(hidden)input.checked=false;});});
@@ -91,5 +96,6 @@
   advanced.querySelectorAll('input[name="width"],input[name="length"]').forEach(input=>input.closest('.field').classList.add('price-size-field'));
   style.textContent+='#products .price-size-field>span{font-size:16px;font-weight:700;color:#08678d}#products .price-size-field>input{min-height:58px;background:#edf9ff;border:2px solid #169dc6;border-radius:12px;font-size:22px;font-weight:650;color:#104960;padding:12px 16px;box-shadow:0 3px 10px #0085b010}#products .price-size-field>input::placeholder{font-size:16px;font-weight:400;color:#6b8da1}#products .price-size-field>input:focus{outline:none;border-color:#007ca8;background:#fff;box-shadow:0 0 0 4px #0a9bcb26}#products .price-unit-choice{align-self:end}';
   style.textContent+='#products .price-equipment-row:has(>.field[hidden]){grid-template-columns:1fr}';
+  style.textContent+='#products .price-slot-style .price-return-options{grid-template-columns:repeat(6,minmax(0,1fr))}#products .price-slot-style .price-return-option{justify-content:center;white-space:nowrap;padding:10px 6px}@media(max-width:1050px){#products .price-slot-style .price-return-options{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:600px){#products .price-slot-style .price-return-options{grid-template-columns:repeat(2,minmax(0,1fr))}}';
   document.head.append(style);
 })();
