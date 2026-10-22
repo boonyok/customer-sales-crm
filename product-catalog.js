@@ -90,6 +90,13 @@
 // Exact catalog SKUs for a Square Ceiling Diffuser size; no records are created.
 const squareCeilingCodes=options=>{
   const f=options.filters||{};
+  if(options.category==='Linear Slot'&&f.width){
+    const cm=f.unit==='mm'?Number(f.width)/10:f.unit==='cm'?Number(f.width):Number(f.width)*2.5;
+    if(!Number.isInteger(cm)||cm<20||cm>600)return [];
+    const slots=/^[1-6]$/.test(String(f.slot||''))?[Number(f.slot)]:[1,2,3,4,5,6];
+    const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
+    return slots.flatMap(slot=>colors.map(color=>'L'+slot+'-'+cm+'C'+color));
+  }
   if(!['Square Ceiling','Volume Damper'].includes(options.category)||!f.width||!f.length)return null;
   const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Math.round(Number(n)/25):Number(n);
   const w=inch(f.width),l=inch(f.length);
