@@ -45,7 +45,11 @@
       if(f[key]==='yes'&&(!yes.test(text)||no.test(text)))return false;
       if(f[key]==='no'&&!no.test(text))return false;
     }
-    if(f.width||f.length){
+    if(category==='Linear Slot'&&f.width){
+      const cm=f.unit==='mm'?Number(f.width)/10:f.unit==='cm'?Number(f.width):Number(f.width)*2.5;
+      const length=String(p.sku).trim().match(/^L[1-6]-(\d+)C(?:W|BK|T)?$/i);
+      if(!length||Number(length[1])!==cm)return false;
+    }else if(f.width||f.length){
       const dimensions=String(p.size).match(/(\d+(?:\.\d+)?)\s*(?:"|นิ้ว|cm|mm|ซม\.|มม\.)?\s*[x×]\s*(\d+(?:\.\d+)?)/i);
       if(!dimensions)return false;
       const size=String(p.size),unit=/mm|มม/i.test(size)?'mm':/cm|ซม/i.test(size)?'cm':'inch';
