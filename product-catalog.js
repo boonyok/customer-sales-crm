@@ -63,6 +63,7 @@
     const addSku=(patterns,negative=false)=>groups.push({patterns,negative,sku_only:true});
     if(category==='Square Ceiling')addSku(['Q%']);
     if(category==='Volume Damper')addSku(['VD%']);
+    if(category==='Linear Slot'&&/^[1-6]$/.test(String(filters.slot||'')))addSku(['L'+filters.slot+'-%']);
     const colors={white:['%W'],black:['%BK'],custom:['%T']};
     if(colors[filters.color])addSku(colors[filters.color]);
     if(filters.color==='aluminium')addSku(['%W','%BK','%T'],true);
