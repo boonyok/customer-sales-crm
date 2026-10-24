@@ -1,7 +1,7 @@
 (() => {
   // Boonyok's own SKU convention: style + D + Ins + width I height + color.
   function parse(value) {
-    const m=String(value??'').trim().match(/^(RUU|RU|RT|RH|RR|R|E|FZL|FZS)(D)?(Ins)?(\d+(?:\.\d+)?)I(\d+(?:\.\d+)?)(BK|W|T)?$/i);
+    const m=String(value??'').trim().match(/^(RUU|RU|RT|RH|RR|R|E|FZL|FZS|S)(D)?(Ins)?(\d+(?:\.\d+)?)I(\d+(?:\.\d+)?)(BK|W|T)?$/i);
     if(!m)return null;
     return {style:m[1].toUpperCase(),damper:Boolean(m[2]),screen:Boolean(m[3]),width:Number(m[4]),length:Number(m[5]),color:m[6]?.toUpperCase()||'',dimension:m[4]+'I'+m[5]};
   }
