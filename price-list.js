@@ -35,7 +35,7 @@
     if(equipment===false)return false;
     if(f.returnStyle&&!returnCode)return false;
     const sku=String(p.sku).trim().toUpperCase();
-    const color=/BK$/.test(sku)?'black':/W$/.test(sku)?'white':/T$/.test(sku)?'custom':(linearSlot||/\d$/.test(sku))?'aluminium':null;
+    const color=/BK$/.test(sku)?'black':/W$/.test(sku)?'white':/T$/.test(sku)?'custom':'aluminium';
     if(f.color&&f.color!==color)return false;
     if(squareCode){
       if(f.damper&&(f.damper==='yes')!==/^QD\d/i.test(sku))return false;
