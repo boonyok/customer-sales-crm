@@ -72,9 +72,9 @@
       if(filters.returnStyle==='R')addSku(['RU%','RT%','RH%','RR%'],true);
       if(filters.returnStyle==='RU')addSku(['RUU%'],true);
     }
-    const ownFamilies=['Return Air','Exhaust Air','Fresh Air','Square Ceiling'].includes(category)||Boolean(filters.returnStyle);
+    const ownFamilies=['Return Air','Exhaust Air','Fresh Air','Square Ceiling','Supply Air'].includes(category)||Boolean(filters.returnStyle);
     if(ownFamilies){
-      if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','QD%','FZLD%','FZSD%'],filters.damper==='no');
+      if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','QD%','FZLD%','FZSD%','SD%'],filters.damper==='no');
       if(filters.screen)addSku(['%Ins%'],filters.screen==='no');
     }
     const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
@@ -97,15 +97,16 @@ const squareCeilingCodes=options=>{
     const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
     return slots.flatMap(slot=>colors.map(color=>'L'+slot+'-'+cm+'C'+color));
   }
-  if(!['Square Ceiling','Volume Damper'].includes(options.category)||!f.width||!f.length)return null;
+  if(!['Square Ceiling','Volume Damper','Supply Air'].includes(options.category)||!f.width||!f.length)return null;
   const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Math.round(Number(n)/25):Number(n);
   const w=inch(f.width),l=inch(f.length);
   if(!Number.isInteger(w)||!Number.isInteger(l)||w<=0||l<=0)return null;
   if(options.category==='Volume Damper')return ['VD','VDS'].map(root=>`${root}${w}I${l}`);
-  const roots=f.damper==='yes'?['QD']:f.damper==='no'?['Q']:['Q','QD'];
+  const supply=options.category==='Supply Air';
+  const roots=f.damper==='yes'?[supply?'SD':'QD']:f.damper==='no'?[supply?'S':'Q']:supply?['S','SD']:['Q','QD'];
   const screens=f.screen==='yes'?['Ins']:f.screen==='no'?['']:['','Ins'];
   const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
-  return roots.flatMap(root=>screens.flatMap(screen=>colors.map(color=>`${root}${w}I${l}${screen}${color}`)));
+  return roots.flatMap(root=>screens.flatMap(screen=>colors.map(color=>supply?`${root}${screen}${w}I${l}${color}`:`${root}${w}I${l}${screen}${color}`)));
 };
 
   function create(c) {
