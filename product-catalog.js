@@ -74,7 +74,8 @@
     }
     const ownFamilies=['Return Air','Exhaust Air','Fresh Air','Square Ceiling','Supply Air'].includes(category)||Boolean(filters.returnStyle);
     if(ownFamilies){
-      if(filters.damper)addSku(['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%','ED%','QD%','FZLD%','FZSD%','SD%'],filters.damper==='no');
+      const damperCodes={'Return Air':['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%'],'Exhaust Air':['ED%'],'Fresh Air':['FZLD%','FZSD%'],'Square Ceiling':['QD%'],'Supply Air':['SD%']}[category]||['RD%','RUD%','RUUD%','RTD%','RHD%','RRD%'];
+      if(filters.damper)addSku(damperCodes,filters.damper==='no');
       if(filters.screen)addSku(['%Ins%'],filters.screen==='no');
     }
     const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
@@ -97,11 +98,20 @@ const squareCeilingCodes=options=>{
     const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
     return slots.flatMap(slot=>colors.map(color=>'L'+slot+'-'+cm+'C'+color));
   }
-  if(!['Square Ceiling','Volume Damper','Supply Air'].includes(options.category)||!f.width||!f.length)return null;
+  if(!['Square Ceiling','Volume Damper','Supply Air','Return Air','Exhaust Air','Fresh Air'].includes(options.category)||!f.width||!f.length)return null;
   const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Math.round(Number(n)/25):Number(n);
   const w=inch(f.width),l=inch(f.length);
   if(!Number.isInteger(w)||!Number.isInteger(l)||w<=0||l<=0)return null;
   if(options.category==='Volume Damper')return ['VD','VDS'].map(root=>`${root}${w}I${l}`);
+  const grilleStyles={'Return Air':['R','RU','RUU','RT','RH','RR'],'Exhaust Air':['E'],'Fresh Air':['FZL','FZS']}[options.category];
+  if(grilleStyles){
+    const styles=options.category==='Return Air'&&f.returnStyle?grilleStyles.filter(style=>style===f.returnStyle):grilleStyles;
+    const dampers=f.damper==='yes'?['D']:f.damper==='no'?['']:['','D'];
+    const screens=f.screen==='yes'?['Ins']:f.screen==='no'?['']:['','Ins'];
+    const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
+    const codes=styles.flatMap(style=>dampers.flatMap(damper=>screens.flatMap(screen=>colors.map(color=>style+damper+screen+w+'I'+l+color))));
+    return codes.length<=24?codes:null;
+  }
   const supply=options.category==='Supply Air';
   const roots=f.damper==='yes'?[supply?'SD':'QD']:f.damper==='no'?[supply?'S':'Q']:supply?['S','SD']:['Q','QD'];
   const screens=f.screen==='yes'?['Ins']:f.screen==='no'?['']:['','Ins'];
