@@ -46,7 +46,8 @@
       if(f[key]==='no'&&!no.test(text))return false;
     }
     if(category==='Linear Slot'&&f.width){
-      const cm=f.unit==='mm'?Number(f.width)/10:f.unit==='cm'?Number(f.width):Number(f.width)*2.5;
+      const raw=Number(f.width);if(!Number.isFinite(raw)||raw<=0)return false;
+      const cm=Math.max(20,f.unit==='mm'?raw/10:f.unit==='cm'?raw:raw*2.5);
       const length=String(p.sku).trim().match(/^L[1-6]-(\d+)C(?:W|BK|T)?$/i);
       if(!length||Number(length[1])!==cm)return false;
     }else if(f.width||f.length){
