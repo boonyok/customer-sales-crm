@@ -54,8 +54,9 @@
       if(!dimensions)return false;
       const size=String(p.size),unit=/mm|มม/i.test(size)?'mm':/cm|ซม/i.test(size)?'cm':'inch';
       const inch=(n,u)=>u==='cm'?Math.round(n/2.5):u==='mm'?Math.round(n/25):n;
-      if(f.width&&inch(Number(f.width),f.unit)!==inch(Number(dimensions[1]),unit))return false;
-      if(f.length&&inch(Number(f.length),f.unit)!==inch(Number(dimensions[2]),unit))return false;
+      const requestedInch=value=>{const raw=Number(value);if(!Number.isFinite(raw)||raw<=0)return NaN;const n=inch(raw,f.unit);return category==='Supply Air'?Math.max(4,n):n;};
+      if(f.width&&requestedInch(f.width)!==inch(Number(dimensions[1]),unit))return false;
+      if(f.length&&requestedInch(f.length)!==inch(Number(dimensions[2]),unit))return false;
     }
     return true;
   };
