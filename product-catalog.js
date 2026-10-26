@@ -78,10 +78,10 @@
       if(filters.damper)addSku(damperCodes,filters.damper==='no');
       if(filters.screen)addSku(['%Ins%'],filters.screen==='no');
     }
-    const toInch=value=>filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
+    const toInch=value=>{const raw=Number(value);if(!Number.isFinite(raw)||raw<=0)return NaN;const n=filters.unit==='cm'?Math.round(raw/2.5):filters.unit==='mm'?Math.round(raw/25):raw;return category==='Supply Air'?Math.max(4,n):n;};
     const dimensionPattern=ownFamilies&&filters.width&&filters.length?'%'+toInch(filters.width)+'I'+toInch(filters.length)+'%':null;
     for(const value of [filters.width,filters.length].filter(Boolean)) {
-      const n=filters.unit==='cm'?Math.round(Number(value)/2.5):filters.unit==='mm'?Math.round(Number(value)/25):Number(value);
+      const n=toInch(value);
       if(!Number.isFinite(n)||n<=0)throw Error('ขนาดต้องมากกว่า 0');
       if(!dimensionPattern)add([String(n),String(n*25),String(n*2.5),'cm','ซม'],false,true);
     }
@@ -99,7 +99,7 @@ const squareCeilingCodes=options=>{
     return slots.flatMap(slot=>colors.map(color=>'L'+slot+'-'+cm+'C'+color));
   }
   if(!['Square Ceiling','Volume Damper','Supply Air','Return Air','Exhaust Air','Fresh Air'].includes(options.category)||!f.width||!f.length)return null;
-  const inch=n=>f.unit==='cm'?Math.round(Number(n)/2.5):f.unit==='mm'?Math.round(Number(n)/25):Number(n);
+  const inch=value=>{const raw=Number(value);if(!Number.isFinite(raw)||raw<=0)return NaN;const n=f.unit==='cm'?Math.round(raw/2.5):f.unit==='mm'?Math.round(raw/25):raw;return options.category==='Supply Air'?Math.max(4,n):n;};
   const w=inch(f.width),l=inch(f.length);
   if(!Number.isInteger(w)||!Number.isInteger(l)||w<=0||l<=0)return null;
   if(options.category==='Volume Damper')return ['VD','VDS'].map(root=>`${root}${w}I${l}`);
