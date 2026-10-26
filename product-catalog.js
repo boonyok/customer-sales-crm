@@ -92,7 +92,8 @@
 const squareCeilingCodes=options=>{
   const f=options.filters||{};
   if(options.category==='Linear Slot'&&f.width){
-    const cm=f.unit==='mm'?Number(f.width)/10:f.unit==='cm'?Number(f.width):Number(f.width)*2.5;
+    const raw=Number(f.width);if(!Number.isFinite(raw)||raw<=0)return [];
+    const cm=Math.max(20,f.unit==='mm'?raw/10:f.unit==='cm'?raw:raw*2.5);
     if(!Number.isInteger(cm)||cm<20||cm>600)return [];
     const slots=/^[1-6]$/.test(String(f.slot||''))?[Number(f.slot)]:[1,2,3,4,5,6];
     const colors={aluminium:[''],white:['W'],black:['BK'],custom:['T']}[f.color]||['','W','BK','T'];
