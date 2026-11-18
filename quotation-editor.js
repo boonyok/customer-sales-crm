@@ -53,6 +53,18 @@
     const cash=kind==='cash_bill',title=cash?'บิลเงินสด':'ใบเสนอราคา';
     root.innerHTML=`<style>#modal[data-type="${kind}"]{width:min(1160px,96vw);max-width:96vw}#modal[data-type="${kind}"] .form-content{padding:30px}.qe-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.qe-paid{display:flex;align-items:center;gap:10px;align-self:end;min-height:40px;padding:9px 12px;border:1px solid #dbe1e8;border-radius:8px;background:#f8fafc;color:#26334d;font-weight:600}.qe-grid .qe-paid input{width:17px;height:17px;padding:0;accent-color:#287864}.qe-items{display:grid;gap:14px}.qe-row{border:1px solid #dbe1e8;padding:16px;border-radius:10px;background:#f8fafc}.qe-top{display:flex;justify-content:space-between;align-items:center}.qe-row .field{margin:8px 0}.qe-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.qe-row select,.qe-row textarea,.qe-grid input,.qe-grid select{width:100%;padding:10px;border:1px solid #ccd4dd;border-radius:6px;font:inherit}.qe-row textarea{resize:vertical;min-height:65px}.qe-bottom{display:flex;justify-content:space-between;gap:12px;align-items:center;position:sticky;bottom:0;background:white;padding:14px 0}.qe-total{white-space:pre-line;line-height:1.8}@media(max-width:650px){.qe-grid,.qe-numbers{grid-template-columns:1fr}.qe-bottom{position:static;flex-wrap:wrap}}</style>
       <div class="form-content"><h2>สร้าง${title}</h2><section class="document-form-section document-header-section" aria-label="ข้อมูลหัวบิล"><h3>ข้อมูลหัวบิล</h3><div class="qe-grid"><label class="field"><span>ลูกค้า</span><select name="customerId" required>${customers.map(c=>`<option value="${escape(c.id)}">${escape(c.name)}</option>`).join('')}</select></label><label class="field"><span>${cash?'วันที่ออกบิล':'ยืนราคาถึง'}</span><input name="${cash?'issueDate':'expires'}" required type="date"></label>${cash?'':'<label class="field"><span>ระยะเวลายืนราคา</span><select name="validityMonths"><option value="1" selected>1 เดือน</option><option value="2">2 เดือน</option><option value="3">3 เดือน</option></select></label>'}<label class="field"><span>เงื่อนไขชำระเงิน</span><select name="paymentTerms">${paymentOptions()}</select></label>${cash?'':'<label class="field"><span>กำหนดส่งสินค้า</span><input name="deliveryTerms" maxlength="120" placeholder="เช่น ภายใน 15 วันหลังยืนยันคำสั่งซื้อ"></label>'}</div></section><section class="document-form-section document-items-section" aria-label="รายการสินค้า"><h3>รายการสินค้า</h3><p>เพิ่มได้หลายรายการ ข้อความต่อเนื่องจนเต็มบรรทัด หรือกด Enter เพื่อขึ้นบรรทัดใหม่</p><div class="qe-items"></div><div class="qe-bottom"><button type="button" class="ghost" data-qe-add>+ เพิ่มรายการสินค้า</button><strong data-qe-count></strong></div></section><label class="field"><span>หมายเหตุ</span><textarea name="notes" rows="2"></textarea></label><p class="qe-total" aria-live="polite"></p><div class="form-actions"><button value="cancel" formnovalidate class="ghost">ยกเลิก</button><button class="primary" value="default">บันทึก${title}</button></div></div>`;
+    const vatMode = cash ? null : document.createElement('select');
+    if (vatMode) {
+      const field = document.createElement('label');
+      field.className = 'field';
+      const label = document.createElement('span');
+      label.textContent = 'การคิด VAT';
+      vatMode.add(new Option('มี VAT (' + vatRate + '%)', 'withVat'));
+      vatMode.add(new Option('ไม่มี VAT', 'withoutVat'));
+      field.append(label, vatMode);
+      root.querySelector('.qe-grid').append(field);
+    }
+    const selectedVatRate = () => vatMode?.value === 'withoutVat' ? 0 : vatRate;
     const numberingNotice=document.createElement('p');
     numberingNotice.textContent=`เลขที่อัตโนมัติรูปแบบ ${cash?`CS${String(Number(issueDate().slice(0,4))+543).slice(-2)}-00001`:numberExample(issueDate())} • รันต่อจากเลขลำดับสูงสุดของปี พ.ศ. • ระบบกำหนดเลขจริงเมื่อบันทึก`;
     root.querySelector('h2').after(numberingNotice);
@@ -64,8 +76,18 @@
     const update=()=>{
       [...container.children].forEach((row,i)=>row.querySelector('strong').textContent=`รายการที่ ${i+1}`);
       root.querySelector('[data-qe-count]').textContent=`${container.children.length} รายการ`;
-      try {const t=calculate(read(),products,vatRate);root.querySelector('.qe-total').textContent=cash?`รวม ${money(t.subtotal)} บาท • ส่วนลด ${money(t.discount_amount)} บาท\nยอดสุทธิ ${money(t.grand_total)} บาท`:`รวม ${money(t.subtotal)} บาท • ส่วนลด ${money(t.discount_amount)} บาท\nก่อน VAT ${money(t.taxable_amount)} บาท • VAT ${vatRate}% ${money(t.vat_amount)} บาท • ยอดสุทธิ ${money(t.grand_total)} บาท`;}catch(e){root.querySelector('.qe-total').textContent=e.message;}
+      try {
+        const totals = calculate(read(), products, selectedVatRate());
+        const subtotal = 'รวม ' + money(totals.subtotal) + ' บาท • ส่วนลด ' + money(totals.discount_amount) + ' บาท';
+        const net = 'ยอดสุทธิ ' + money(totals.grand_total) + ' บาท';
+        const vat = totals.vat_rate === 0 ? 'ไม่มี VAT' :
+          'ก่อน VAT ' + money(totals.taxable_amount) + ' บาท • VAT ' + totals.vat_rate + '% ' + money(totals.vat_amount) + ' บาท';
+        root.querySelector('.qe-total').textContent = subtotal + '\n' + (cash ? net : vat + ' • ' + net);
+      } catch (error) {
+        root.querySelector('.qe-total').textContent = error.message;
+      }
     };
+    vatMode?.addEventListener('change', update);
     const add=()=>{
       const row=document.createElement('div');row.className='qe-row';
       row.innerHTML=`<div class="qe-top"><strong></strong><button type="button" class="ghost" data-remove>นำรายการนี้ออก</button></div><div data-sku-picker></div><input type="hidden" data-variant><label class="field"><span>รายละเอียด / ขนาดที่แสดงในเอกสาร</span><textarea data-spec rows="2"></textarea></label><div class="qe-numbers"><label class="field"><span>จำนวน</span><input data-qty type="number" min="1" step="1" value="1" required></label><label class="field"><span>ราคาต่อหน่วย (บาท)</span><input data-price type="number" min="0" step="0.01" value="0" required></label><label class="field"><span>ส่วนลด (%)</span><input data-discount type="number" min="0" max="100" step="0.01" value="0" required></label></div>`;
@@ -78,7 +100,7 @@
     const customerSelect=root.querySelector('[name=customerId]');
     customerSelect.onchange=()=>{const rate=defaultRate();container.querySelectorAll('[data-discount]').forEach(input=>{if(!input.dataset.manual)input.value=String(rate);});discountNotice.textContent=`ส่วนลดประจำลูกค้า ${rate}% • เติมให้อัตโนมัติในรายการใหม่ • แก้ไขรายรายการได้ (รายการที่แก้เองจะไม่ถูกทับเมื่อเปลี่ยนลูกค้า)`;update();};
     customerSelect.onchange();if(cash)root.querySelector('[name=issueDate]').value=issueDate();else{const date=root.querySelector('[name=expires]'),months=root.querySelector('[name=validityMonths]');date.value=addMonths(issueDate(),1);months.onchange=()=>{date.value=addMonths(issueDate(),Number(months.value));};}add();
-    return {read};
+    return {read, selectedVatRate};
   };
   window.QuotationEditor={encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths,paymentWithDueDate,paymentOptions};
 })();

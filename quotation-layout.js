@@ -198,7 +198,16 @@
     const extraNote=String(details.notes||'').trim();
     const noteText=billing?'':cash||taxInvoice?extraNote:[...quotationRemarks,...(extraNote?[extraNote]:[])].join('\n');
     const cashPaymentLines=cash?['ชื่อบัญชี  นางสาวเบญจมาศ สุภาษี','ธนาคารกสิกรไทย  เลขที่ 014-8-15927-0','ธนาคารกรุงเทพ  เลขที่ 030-7-231852','ธนาคารเกียรตินาคิน  เลขที่ 208-4-77636-5']:[];
-    const amounts=billing?[]:cash?[['รวมก่อนส่วนลด',doc.subtotal],['ส่วนลด',doc.discount_amount],['ยอดสุทธิ / TOTAL',doc.grand_total]]:[['รวมก่อนส่วนลด',doc.subtotal],['ส่วนลด',doc.discount_amount],['มูลค่าก่อน VAT',doc.taxable_amount],['VAT '+(doc.vat_rate??0)+'%',doc.vat_amount],['ยอดสุทธิ / TOTAL',doc.grand_total]];
+    const withoutVat = doc.kind === 'quotation' && doc.vat_rate != null && Number(doc.vat_rate) === 0;
+    const amounts = billing ? [] : [
+      ['รวมก่อนส่วนลด', doc.subtotal],
+      ['ส่วนลด', doc.discount_amount],
+      ...(!cash && !withoutVat ? [
+        ['มูลค่าก่อน VAT', doc.taxable_amount],
+        ['VAT ' + (doc.vat_rate ?? 0) + '%', doc.vat_amount]
+      ] : []),
+      [withoutVat ? 'ยอดสุทธิ (ไม่มี VAT)' : 'ยอดสุทธิ / TOTAL', doc.grand_total]
+    ];
     if(!billing){
       let notes=noteText?wrap(noteText,590,16,false,measure):[],continued=false;
       const standardLines=cash||taxInvoice?[]:productionStandards.flatMap(value=>wrap(value,590,16,false,measure));
