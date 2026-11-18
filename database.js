@@ -456,7 +456,9 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     const customer = editorCustomers.find((item) => item.id === data.customerId);
     if (!customer) throw new Error('กรุณาเลือกลูกค้า');
     const rows = quotationEditor.read();
-    const {items,...totals} = window.QuotationEditor.calculate(rows,editorProducts);
+    const {items,...totals} = window.QuotationEditor.calculate(
+      rows, editorProducts, quotationEditor.selectedVatRate?.()
+    );
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data.expires||'')) throw new Error('กรุณาระบุวันยืนราคา');
     const inputKey = JSON.stringify({data,rows});
     if (pendingQuotation && pendingQuotation.inputKey !== inputKey) throw new Error('การบันทึกก่อนหน้ายังไม่สมบูรณ์ กรุณากลับเป็นข้อมูลเดิมแล้วกดบันทึกซ้ำเพื่อไม่ให้เกิดเอกสารซ้ำ');
