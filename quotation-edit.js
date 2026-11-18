@@ -27,14 +27,22 @@
   if(!Number.isFinite(total)||subtotal>=1e12||total>=1e12)throw Error('ยอดเงินเกินขอบเขต');
   return {subtotal,discount,taxable,vat,total};
  };
+ const vatRateFor=(doc,mode)=>{
+  const original=Number(doc.vat_rate);
+  if(mode==='withoutVat')return 0;
+  return mode==='withVat'&&original===0?7:original;
+ };
  const payload=(doc,data,items)=>{
   if(!dateOK(data.issueDate)||!dateOK(data.validUntil)||data.issueDate<'2000-01-01'||data.validUntil>'2199-12-31'||data.validUntil<data.issueDate)throw Error('วันยืนราคาต้องไม่ก่อนวันที่เอกสาร');
   if(String(data.deliveryTerms||'').length>120||String(data.paymentTerms||'').length>120||String(data.notes||'').length>4000)throw Error('ข้อความเงื่อนไขหรือหมายเหตุยาวเกินกำหนด');
-  totals(items,Number(doc.vat_rate));
-  return {p_org:doc.organization_id,p_id:doc.id,p_number:doc.document_number,p_expected_updated_at:doc.updated_at,p_customer:data.customerId||null,p_issue:data.issueDate,p_valid:data.validUntil,p_terms:data.paymentTerms||'',p_notes:data.notes||'',p_delivery:data.deliveryTerms||'',p_items:items.map(i=>({...i,quantity:Number(i.quantity),unit_price:Number(i.unit_price),discount_amount:Number(i.discount_amount)}))};
+  const vatRate=vatRateFor(doc,data.vatMode);
+  totals(items,vatRate);
+  const vatChange=vatRate!==Number(doc.vat_rate)?{p_with_vat:vatRate>0}:{};
+  return {p_org:doc.organization_id,p_id:doc.id,p_number:doc.document_number,p_expected_updated_at:doc.updated_at,p_customer:data.customerId||null,p_issue:data.issueDate,p_valid:data.validUntil,p_terms:data.paymentTerms||'',p_notes:data.notes||'',p_delivery:data.deliveryTerms||'',...vatChange,p_items:items.map(i=>({...i,quantity:Number(i.quantity),unit_price:Number(i.unit_price),discount_amount:Number(i.discount_amount)}))};
  };
  const save=async(request,p)=>{
-  const result=await request('/rest/v1/rpc/edit_quotation',{method:'POST',body:JSON.stringify(p)});
+  const endpoint=typeof p.p_with_vat==='boolean'?'edit_quotation_vat':'edit_quotation';
+  const result=await request('/rest/v1/rpc/'+endpoint,{method:'POST',body:JSON.stringify(p)});
   if(result?.id!==p.p_id||result.document_number!==(p.p_new_number||p.p_number)||result.updated!==true||!result.updated_at)throw Error('ยังยืนยันผลบันทึกไม่ได้ กรุณาปิดแล้วเปิดเอกสารตรวจสอบก่อนลองใหม่');
   return result;
  };
@@ -60,8 +68,30 @@
    numberLabel.querySelector('input').value=doc.document_number;form.querySelector('.te-grid').prepend(numberLabel);
    form.querySelector('h2').nextElementSibling.textContent='แก้ไขใบเสนอราคาเดิม • รหัสสินค้าไม่แสดงในแบบพิมพ์';
    const deliveryLabel=document.createElement('label');deliveryLabel.className='field';deliveryLabel.innerHTML='<span>กำหนดจัดส่งสินค้า</span><input name="deliveryTerms" maxlength="120">';deliveryLabel.querySelector('input').value=details.deliveryTerms||'';form.querySelector('.te-grid').append(deliveryLabel);
+   const vatField=document.createElement('label');
+   vatField.className='field';
+   const vatLabel=document.createElement('span');
+   vatLabel.textContent='การคิด VAT';
+   const vatMode=document.createElement('select');
+   vatMode.name='vatMode';
+   vatMode.add(new Option('มี VAT ('+vatRateFor(doc,'withVat')+'%)','withVat'));
+   vatMode.add(new Option('ไม่มี VAT','withoutVat'));
+   vatMode.value=Number(doc.vat_rate)===0?'withoutVat':'withVat';
+   vatField.append(vatLabel,vatMode);
+   form.querySelector('.te-grid').append(vatField);
    const read=()=>[...lines.children].map(row=>({existing_item_id:row.dataset.existing||null,variant_id:row.dataset.variant||null,specification:row.querySelector('[data-spec]').value,quantity:row.querySelector('[data-qty]').value,unit_price:row.querySelector('[data-price]').value,discount_amount:discountAmount(row.querySelector('[data-qty]').value,row.querySelector('[data-price]').value,row.querySelector('[data-discount]').value,row.originalDiscount)}));
-   const update=()=>{try{const t=totals(read(),Number(doc.vat_rate));form.querySelector('[data-total]').textContent=`รวม ${money(t.subtotal)} · ส่วนลด ${money(t.discount)} · VAT ${money(t.vat)} · ยอดสุทธิ ${money(t.total)} บาท`;}catch(e){form.querySelector('[data-total]').textContent=e.message;}};
+   const update=()=>{
+    const summary=form.querySelector('[data-total]');
+    try {
+     const rate=vatRateFor(doc,vatMode.value);
+     const amounts=totals(read(),rate);
+     const vat=rate===0?'ไม่มี VAT':'VAT '+rate+'% '+money(amounts.vat);
+     summary.textContent='รวม '+money(amounts.subtotal)+' · ส่วนลด '+money(amounts.discount)+' · '+vat+' · ยอดสุทธิ '+money(amounts.total)+' บาท';
+    } catch (error) {
+     summary.textContent=error.message;
+    }
+   };
+   vatMode.addEventListener('change',update);
    const add=item=>{
     const row=document.createElement('div');row.className='te-line';row.dataset.existing=item?.id||'';row.originalDiscount=item||null;
     row.innerHTML=`<div class="te-top"><strong data-name>${esc(item?.product_name_snapshot||'สินค้าใหม่')}</strong><button type="button" class="ghost" data-remove>นำรายการออก</button></div><div data-picker></div>${item?'<button type="button" class="ghost" data-change>เปลี่ยนสินค้า</button>':''}<label class="field"><span>รายละเอียด / ขนาดในเอกสาร</span><textarea data-spec maxlength="2000">${esc(item?.specification_snapshot||'')}</textarea></label><div class="te-numbers"><label class="field"><span>จำนวน</span><input data-qty type="number" required min="1" step="1" value="${esc(item?.quantity??1)}"></label><label class="field"><span>ราคาต่อหน่วย (บาท)</span><input data-price type="number" required min="0" step="0.01" value="${esc(item?.unit_price??0)}"></label><label class="field"><span>ส่วนลด (%)</span><input data-discount type="number" required min="0" max="100" step="any" value="${esc(discountRate(item))}"></label></div>`;
