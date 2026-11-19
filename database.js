@@ -405,19 +405,36 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     });
     modal.dataset.type=type;if(!modal.open)modal.showModal();
   };
+  let savingProduct=false;
+  let pendingProduct=null;
   const addProduct = async (data) => {
-    const sku = String(data.sku || '').trim();
-    if (!sku) throw Error('กรุณาระบุรหัสสินค้า');
-    // Product codes are unique per company. Check first so users get a clear
-    // message instead of the raw database constraint error.
-    const duplicate = await request('/rest/v1/products?organization_id=eq.'+encodeURIComponent(orgId)+'&code=ilike.'+encodeURIComponent(sku)+'&select=id,code&limit=1');
-    if (Array.isArray(duplicate) && duplicate.length) {
-      throw Error(`รหัสสินค้า ${sku} มีอยู่แล้ว กรุณาใช้รหัสใหม่ หรือแก้ไขรายการเดิม`);
+    const actionOrg=orgId;
+    const sku=String(data.sku||'').trim();
+    const name=String(data.name||'').trim();
+    const size=String(data.size||'').trim();
+    const price=Number(data.price);
+    if(!sku||!name||!size||String(data.price??'').trim()===''||!Number.isFinite(price)||price<0||price>=1e12||Math.abs(price*100-Math.round(price*100))>0.000001) {
+      throw Error('กรุณาระบุรหัส ชื่อ ขนาด และราคาที่ถูกต้อง');
     }
-    const products = await request('/rest/v1/products', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ organization_id: orgId, code: sku, name: data.name, unit: 'ชิ้น' }) });
-    const variants = await request('/rest/v1/product_variants', { method: 'POST', headers: { Prefer: 'return=representation' }, body: JSON.stringify({ product_id: products[0].id, sku, label: data.size }) });
-    await request('/rest/v1/variant_prices', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ variant_id: variants[0].id, price: Number(data.price) }) });
-    catalogService.clear();await window.ProductCatalogUI.load(true);render();
+    const inputKey=JSON.stringify([actionOrg,sku,name,size,price]);
+    if(pendingProduct&&pendingProduct.inputKey!==inputKey)throw Error('การบันทึกก่อนหน้ายังยืนยันไม่ได้ กรุณากดบันทึกข้อมูลเดิมอีกครั้งเพื่อตรวจผล');
+    if(!pendingProduct)pendingProduct={inputKey,id:crypto.randomUUID()};
+    const submitted=pendingProduct;
+    let result;
+    try {
+      result=await request('/rest/v1/rpc/crm_create_product',{
+        method:'POST',body:JSON.stringify({p_org:actionOrg,p_id:submitted.id,p_sku:sku,p_name:name,p_size:size,p_price:price})
+      });
+    } catch(error) {
+      if(['22023','23505','42501'].includes(error.code))pendingProduct=null;
+      throw error;
+    }
+    if(result?.created!==true||result.product_id!==submitted.id||result.variant_id!==submitted.id)throw Error('ยังยืนยันผลบันทึกไม่ได้ กรุณากดบันทึกซ้ำด้วยข้อมูลเดิม');
+    pendingProduct=null;
+    if(actionOrg!==orgId)return;
+    catalogService.clear();
+    try {await window.ProductCatalogUI.load(true);render();}
+    catch {alert('บันทึกสินค้าแล้ว แต่โหลดตารางใหม่ไม่สำเร็จ กรุณาค้นหารหัสสินค้าอีกครั้ง');}
   };
   const importVDFlangeCatalog = async () => {
     if (localStorage.getItem('vd-flange-catalog-imported-v2')===orgId) return;
@@ -580,7 +597,14 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
         try{await request('/rest/v1/customers',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({organization_id:orgId,...body})});modal.close();await syncCustomers();render();}
         catch(e){error.textContent=e.message;}finally{delete form.dataset.customerSaving;submit.disabled=false;}
       }
-      else if (modal.dataset.type === 'product' && session && orgId) { await addProduct(data); modal.close(); }
+      else if (modal.dataset.type === 'product' && session && orgId) {
+        if(savingProduct)return;
+        savingProduct=true;
+        const controls=[...event.currentTarget.querySelectorAll('input,textarea,select,button')];
+        controls.forEach(control=>control.disabled=true);
+        try {await addProduct(data);modal.close();}
+        finally {savingProduct=false;controls.forEach(control=>control.disabled=false);}
+      }
       else if (modal.dataset.type === 'quotation' && session && orgId) {
         if (savingQuotation) return;
         savingQuotation=true;
