@@ -12,7 +12,7 @@
  };
  const money=n=>Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
  const dateOK=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
- const totals=(items,vatRate=7)=>{
+ const totals=(items,vatRate=7,special={type:'amount',value:0})=>{
   if(!items.length||items.length>200)throw Error('กรุณาระบุสินค้า 1–200 รายการ');
   let subtotal=0,discount=0;
   for(const [i,item] of items.entries()){
@@ -23,9 +23,11 @@
    subtotal=round(subtotal+round(q*p));discount=round(discount+d);
   }
   if(!Number.isFinite(vatRate)||vatRate<0||vatRate>100)throw Error('อัตรา VAT ไม่ถูกต้อง');
+  const specialAmount=window.QuotationEditor.specialDiscount(round(subtotal-discount),special.type,special.value);
+  discount=round(discount+specialAmount);
   const taxable=round(subtotal-discount),vat=round(taxable*vatRate/100),total=round(taxable+vat);
   if(!Number.isFinite(total)||subtotal>=1e12||total>=1e12)throw Error('ยอดเงินเกินขอบเขต');
-  return {subtotal,discount,taxable,vat,total};
+  return {subtotal,discount,taxable,vat,total,specialAmount};
  };
  const vatRateFor=(doc,mode)=>{
   const original=Number(doc.vat_rate);
@@ -36,12 +38,13 @@
   if(!dateOK(data.issueDate)||!dateOK(data.validUntil)||data.issueDate<'2000-01-01'||data.validUntil>'2199-12-31'||data.validUntil<data.issueDate)throw Error('วันยืนราคาต้องไม่ก่อนวันที่เอกสาร');
   if(String(data.deliveryTerms||'').length>120||String(data.paymentTerms||'').length>120||String(data.notes||'').length>4000)throw Error('ข้อความเงื่อนไขหรือหมายเหตุยาวเกินกำหนด');
   const vatRate=vatRateFor(doc,data.vatMode);
-  totals(items,vatRate);
-  const vatChange=vatRate!==Number(doc.vat_rate)?{p_with_vat:vatRate>0}:{};
+  const special={type:data.specialDiscountType??doc.special_discount_type??'amount',value:data.specialDiscountValue??doc.special_discount_value??0};
+  totals(items,vatRate,special);
+  const vatChange={p_with_vat:vatRate>0,p_special_discount_type:special.type,p_special_discount_value:Number(special.value)};
   return {p_org:doc.organization_id,p_id:doc.id,p_number:doc.document_number,p_expected_updated_at:doc.updated_at,p_customer:data.customerId||null,p_issue:data.issueDate,p_valid:data.validUntil,p_terms:data.paymentTerms||'',p_notes:data.notes||'',p_delivery:data.deliveryTerms||'',...vatChange,p_items:items.map(i=>({...i,quantity:Number(i.quantity),unit_price:Number(i.unit_price),discount_amount:Number(i.discount_amount)}))};
  };
  const save=async(request,p)=>{
-  const endpoint=typeof p.p_with_vat==='boolean'?'edit_quotation_vat':'edit_quotation';
+  const endpoint=p.p_special_discount_type?'edit_quotation_discount':typeof p.p_with_vat==='boolean'?'edit_quotation_vat':'edit_quotation';
   const result=await request('/rest/v1/rpc/'+endpoint,{method:'POST',body:JSON.stringify(p)});
   if(result?.id!==p.p_id||result.document_number!==(p.p_new_number||p.p_number)||result.updated!==true||!result.updated_at)throw Error('ยังยืนยันผลบันทึกไม่ได้ กรุณาปิดแล้วเปิดเอกสารตรวจสอบก่อนลองใหม่');
   return result;
@@ -84,13 +87,14 @@
     const summary=form.querySelector('[data-total]');
     try {
      const rate=vatRateFor(doc,vatMode.value);
-     const amounts=totals(read(),rate);
+     const amounts=totals(read(),rate,readSpecialDiscount());
      const vat=rate===0?'ไม่มี VAT':'VAT '+rate+'% '+money(amounts.vat);
-     summary.textContent='รวม '+money(amounts.subtotal)+' · ส่วนลด '+money(amounts.discount)+' · '+vat+' · ยอดสุทธิ '+money(amounts.total)+' บาท';
+     summary.textContent='รวม '+money(amounts.subtotal)+' · ส่วนลดรายสินค้า '+money(amounts.discount-amounts.specialAmount)+' · ส่วนลดพิเศษ '+money(amounts.specialAmount)+' · '+vat+' · ยอดสุทธิ '+money(amounts.total)+' บาท';
     } catch (error) {
      summary.textContent=error.message;
     }
    };
+   const readSpecialDiscount=window.QuotationEditor.mountSpecialDiscount(form.querySelector('[data-total]'),{type:doc.special_discount_type,value:doc.special_discount_value},update);
    vatMode.addEventListener('change',update);
    const add=item=>{
     const row=document.createElement('div');row.className='te-line';row.dataset.existing=item?.id||'';row.originalDiscount=item||null;
