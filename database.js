@@ -474,7 +474,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     if (!customer) throw new Error('กรุณาเลือกลูกค้า');
     const rows = quotationEditor.read();
     const {items,...totals} = window.QuotationEditor.calculate(
-      rows, editorProducts, quotationEditor.selectedVatRate?.()
+      rows, editorProducts, quotationEditor.selectedVatRate?.(), quotationEditor.readSpecialDiscount?.()
     );
     if (!/^\d{4}-\d{2}-\d{2}$/.test(data.expires||'')) throw new Error('กรุณาระบุวันยืนราคา');
     const inputKey = JSON.stringify({data,rows});
