@@ -331,7 +331,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     window.TaxInvoiceEdit?.configure(request,orgId,documentEditorCatalog,refreshTaxInvoiceViews);
     window.CashBillEdit?.configure(request,orgId,documentEditorCatalog,async()=>{await syncCashBills();});
     window.BillingEdit?.configure(request,orgId,refreshTaxInvoiceViews);
-    window.QuotationEdit?.configure(request,orgId,documentEditorCatalog,async()=>{await syncQuotations();state.quotations.forEach(quote=>{quote.taxInvoiceNumber=quotationTaxInvoices.get(quote.id)?.document_number||null;if(quote.statusCode==='approved')quote.status=quote.taxInvoiceNumber?'ออกใบกำกับภาษีแล้ว':'รอออกใบกำกับภาษี';});save();render();renderDocumentActions();addPrintButtons();});
+    window.QuotationEdit?.configure(request,orgId,documentEditorCatalog,async()=>{catalogService.clear();await syncQuotations();state.quotations.forEach(quote=>{quote.taxInvoiceNumber=quotationTaxInvoices.get(quote.id)?.document_number||null;if(quote.statusCode==='approved')quote.status=quote.taxInvoiceNumber?'ออกใบกำกับภาษีแล้ว':'รอออกใบกำกับภาษี';});save();render();renderDocumentActions();addPrintButtons();});
     window.CustomerEdit?.configure(request,orgId,async()=>{await syncCustomers();save();render();document.querySelector('#customer-search').dispatchEvent(new Event('input'));});
     window.CustomerDelete?.configure(request,orgId,async()=>{await syncCustomers();save();render();document.querySelector('#customer-search').dispatchEvent(new Event('input'));});
     window.DocumentDelete?.configure(request,orgId,async kind=>{
@@ -492,6 +492,7 @@ document.querySelector('#invoices').innerHTML = `<div class="page-toolbar"><h2>�
     submittedQuotation.manualDocumentNumber=data.manualDocumentNumber;
     try{await window.QuotationEditor.persist(request,submittedQuotation);}catch(error){if(error.code==='22023')pendingQuotation=null;throw error;}
     if(pendingQuotation===submittedQuotation)pendingQuotation=null;
+    catalogService.clear();
     if(formToken===openingDocument)modal.close();
     try { await syncAll(); } catch { alert('บันทึกใบเสนอราคาแล้ว แต่โหลดรายการใหม่ไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ'); }
   };

@@ -41,16 +41,55 @@
     root.before(section);
     return ()=>({type:type.value,value:value.value});
   };
+  const validateNewProduct = value => {
+    const product={...value,sku:String(value.sku??'').trim(),name:String(value.name??'').trim(),size:String(value.size??'').trim(),price:Number(value.price)};
+    if(!/^[0-9a-f-]{36}$/i.test(product.id||'')||!product.sku||product.sku.length>200||!product.name||product.name.length>1000||!product.size||product.size.length>2000||String(value.price??'').trim()===''||!Number.isFinite(product.price)||product.price<0||product.price>=1e12||Math.abs(product.price*100-Math.round(product.price*100))>0.000001)throw Error('กรอกรหัส ชื่อ ขนาด และราคาสินค้าใหม่ให้ครบ');
+    return product;
+  };
+  const readNewProduct = row => {
+    const fields=row.querySelector('[data-new-product-fields]');
+    if(!fields||fields.hidden)return null;
+    return {
+      id:fields.dataset.productId,
+      sku:fields.querySelector('[data-new-sku]').value,
+      name:fields.querySelector('[data-new-name]').value,
+      size:row.querySelector('[data-spec]').value,
+      price:row.querySelector('[data-price]').value
+    };
+  };
+  const mountNewProduct = (row,picker,onChange) => {
+    if(row.querySelector('[data-new-product-fields]'))return;
+    const toggle=document.createElement('button');
+    toggle.type='button';toggle.className='ghost';toggle.textContent='กรอกสินค้าใหม่';
+    const fields=document.createElement('div');
+    fields.dataset.newProductFields='';fields.dataset.productId=crypto.randomUUID();fields.hidden=true;
+    fields.innerHTML='<label class="field"><span>รหัสสินค้าใหม่</span><input data-new-sku maxlength="200" required disabled autocomplete="off"></label><label class="field"><span>ชื่อสินค้าใหม่</span><input data-new-name maxlength="1000" required disabled></label><small>บันทึกเข้าข้อมูลสินค้าพร้อมใบเสนอราคา ใช้ขนาดและราคาจากรายการนี้</small>';
+    fields.style.cssText='padding:12px;border:1px solid #b9dcec;border-radius:8px;background:#f2faff';
+    fields.querySelectorAll('input').forEach(input=>input.style.cssText='width:100%;padding:10px;box-sizing:border-box;font:inherit');
+    picker.after(toggle,fields);
+    toggle.onclick=()=>{
+      fields.hidden=!fields.hidden;
+      picker.hidden=!fields.hidden;
+      fields.querySelectorAll('input').forEach(input=>input.disabled=fields.hidden);
+      toggle.textContent=fields.hidden?'กรอกสินค้าใหม่':'เลือกจากข้อมูลสินค้า';
+      if(!fields.hidden){
+        row.originalDiscount=null;
+        const sku=fields.querySelector('[data-new-sku]');
+        if(!sku.value)sku.value=picker.querySelector('input')?.value||'';
+      }
+      onChange();
+    };
+  };
   const calculate = (rows, products, vatRate=7, special={type:'amount',value:0}) => {
     if (!rows.length) throw Error('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ');
     const items = rows.map((row,index) => {
-      const product = products.find(p => p.id === row.variantId);
+      const product = row.newProduct ? validateNewProduct(row.newProduct) : products.find(p => p.id === row.variantId);
       if (!product) throw Error(`กรุณาเลือกสินค้าในรายการที่ ${index+1}`);
       const quantity=Number(row.quantity), price=Number(row.unitPrice), rate=Number(row.discountRate);
       if ([row.quantity,row.unitPrice,row.discountRate].some(v=>String(v??'').trim()==='') || ![quantity,price,rate].every(Number.isFinite) || !Number.isSafeInteger(quantity) || quantity<=0 || price<0 || rate<0 || rate>100) throw Error(`ตรวจจำนวน ราคา และส่วนลด 0–100% ในรายการที่ ${index+1}`);
       const gross=round(quantity*price), discount=round(gross*rate/100);
       if (!Number.isFinite(gross) || gross>=1e12) throw Error('ยอดรายการสินค้าเกินขอบเขตที่รองรับ');
-      return {position:index+1,product_variant_id:product.id,sku_snapshot:product.sku,product_name_snapshot:product.name,specification_snapshot:String(row.specification??product.size??''),unit_snapshot:product.unit||'ชิ้น',quantity,unit_price:price,discount_amount:discount,line_total:round(gross-discount)};
+      return {position:index+1,product_variant_id:product.id,sku_snapshot:product.sku,product_name_snapshot:product.name,specification_snapshot:String(row.specification??product.size??''),unit_snapshot:product.unit||'ชิ้น',quantity,unit_price:price,discount_amount:discount,line_total:round(gross-discount),...(row.newProduct?{new_product:product}:{})};
     });
     const subtotal=round(items.reduce((s,i)=>s+round(i.quantity*i.unit_price),0));
     const lineDiscount=round(items.reduce((s,i)=>s+i.discount_amount,0));
@@ -91,7 +130,7 @@
     const container=root.querySelector('.qe-items');
     const defaultRate=()=>{const value=Number(customers.find(c=>c.id===root.querySelector('[name=customerId]').value)?.defaultDiscount??0);return Number.isFinite(value)&&value>=0&&value<=100?value:0;};
     const discountNotice=document.createElement('p');discountNotice.setAttribute('role','status');container.before(discountNotice);
-    const read=()=>[...container.children].map(row=>({variantId:row.querySelector('[data-variant]').value,specification:row.querySelector('[data-spec]').value,quantity:row.querySelector('[data-qty]').value,unitPrice:row.querySelector('[data-price]').value,discountRate:row.querySelector('[data-discount]').value}));
+    const read=()=>[...container.children].map(row=>({variantId:row.querySelector('[data-variant]').value,newProduct:readNewProduct(row),specification:row.querySelector('[data-spec]').value,quantity:row.querySelector('[data-qty]').value,unitPrice:row.querySelector('[data-price]').value,discountRate:row.querySelector('[data-discount]').value}));
     const update=()=>{
       [...container.children].forEach((row,i)=>row.querySelector('strong').textContent=`รายการที่ ${i+1}`);
       root.querySelector('[data-qe-count]').textContent=`${container.children.length} รายการ`;
@@ -112,6 +151,7 @@
       const row=document.createElement('div');row.className='qe-row';
       row.innerHTML=`<div class="qe-top"><strong></strong><button type="button" class="ghost" data-remove>นำรายการนี้ออก</button></div><div data-sku-picker></div><input type="hidden" data-variant><label class="field"><span>รายละเอียด / ขนาดที่แสดงในเอกสาร</span><textarea data-spec rows="2"></textarea></label><div class="qe-numbers"><label class="field"><span>จำนวน</span><input data-qty type="number" min="1" step="1" value="1" required></label><label class="field"><span>ราคาต่อหน่วย (บาท)</span><input data-price type="number" min="0" step="0.01" value="0" required></label><label class="field"><span>ส่วนลด (%)</span><input data-discount type="number" min="0" max="100" step="0.01" value="0" required></label></div>`;
       window.ProductCodePicker.mount(row.querySelector('[data-sku-picker]'),products,p=>{if(productLookup&&p){const i=products.findIndex(item=>item.id===p.id);if(i<0)products.push(p);else products[i]=p;}row.querySelector('[data-variant]').value=p?.id??'';row.querySelector('[data-price]').value=p?.price??0;row.querySelector('[data-spec]').value=p?.size??'';update();},{lookup:productLookup});
+      if(!cash)mountNewProduct(row,row.querySelector('[data-sku-picker]'),update);
       const discount=row.querySelector('[data-discount]');discount.value=String(defaultRate());discount.addEventListener('input',()=>{discount.dataset.manual='1';});
       row.querySelector('[data-remove]').onclick=()=>{row.remove();update();};
       row.addEventListener('input',update);container.append(row);update();
@@ -122,5 +162,5 @@
     customerSelect.onchange();if(cash)root.querySelector('[name=issueDate]').value=issueDate();else{const date=root.querySelector('[name=expires]'),months=root.querySelector('[name=validityMonths]');date.value=addMonths(issueDate(),1);months.onchange=()=>{date.value=addMonths(issueDate(),Number(months.value));};}add();
     return {read, selectedVatRate, readSpecialDiscount};
   };
-  window.QuotationEditor={specialDiscount,mountSpecialDiscount,encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths,paymentWithDueDate,paymentOptions};
+  window.QuotationEditor={validateNewProduct,readNewProduct,mountNewProduct,specialDiscount,mountSpecialDiscount,encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths,paymentWithDueDate,paymentOptions};
 })();

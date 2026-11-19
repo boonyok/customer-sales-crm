@@ -16,7 +16,8 @@
   if(!items.length||items.length>200)throw Error('กรุณาระบุสินค้า 1–200 รายการ');
   let subtotal=0,discount=0;
   for(const [i,item] of items.entries()){
-   if(!item.existing_item_id&&!item.variant_id)throw Error(`เลือกรหัสสินค้าในรายการที่ ${i+1}`);
+   if(item.new_product)window.QuotationEditor.validateNewProduct(item.new_product);
+   if(!item.existing_item_id&&!item.variant_id&&!item.new_product)throw Error(`เลือกรหัสสินค้าในรายการที่ ${i+1}`);
    const q=Number(item.quantity),p=Number(item.unit_price),d=Number(item.discount_amount);
    if([item.quantity,item.unit_price,item.discount_amount].some(v=>String(v??'').trim()==='')||![q,p,d].every(Number.isFinite)||q<=0||q>=1e11||!Number.isSafeInteger(q)||p<0||p>=1e12||p!==round(p)||d<0||d!==round(d)||d>round(q*p))throw Error(`ตรวจจำนวน ราคา และส่วนลดในรายการที่ ${i+1}`);
    if(String(item.specification||'').length>2000)throw Error('รายละเอียดสินค้ายาวเกิน 2,000 ตัวอักษร');
@@ -82,7 +83,7 @@
    vatMode.value=Number(doc.vat_rate)===0?'withoutVat':'withVat';
    vatField.append(vatLabel,vatMode);
    form.querySelector('.te-grid').append(vatField);
-   const read=()=>[...lines.children].map(row=>({existing_item_id:row.dataset.existing||null,variant_id:row.dataset.variant||null,specification:row.querySelector('[data-spec]').value,quantity:row.querySelector('[data-qty]').value,unit_price:row.querySelector('[data-price]').value,discount_amount:discountAmount(row.querySelector('[data-qty]').value,row.querySelector('[data-price]').value,row.querySelector('[data-discount]').value,row.originalDiscount)}));
+   const read=()=>[...lines.children].map(row=>({existing_item_id:row.dataset.existing||null,variant_id:row.dataset.variant||null,new_product:window.QuotationEditor.readNewProduct(row),specification:row.querySelector('[data-spec]').value,quantity:row.querySelector('[data-qty]').value,unit_price:row.querySelector('[data-price]').value,discount_amount:discountAmount(row.querySelector('[data-qty]').value,row.querySelector('[data-price]').value,row.querySelector('[data-discount]').value,row.originalDiscount)}));
    const update=()=>{
     const summary=form.querySelector('[data-total]');
     try {
@@ -101,7 +102,10 @@
     row.innerHTML=`<div class="te-top"><strong data-name>${esc(item?.product_name_snapshot||'สินค้าใหม่')}</strong><button type="button" class="ghost" data-remove>นำรายการออก</button></div><div data-picker></div>${item?'<button type="button" class="ghost" data-change>เปลี่ยนสินค้า</button>':''}<label class="field"><span>รายละเอียด / ขนาดในเอกสาร</span><textarea data-spec maxlength="2000">${esc(item?.specification_snapshot||'')}</textarea></label><div class="te-numbers"><label class="field"><span>จำนวน</span><input data-qty type="number" required min="1" step="1" value="${esc(item?.quantity??1)}"></label><label class="field"><span>ราคาต่อหน่วย (บาท)</span><input data-price type="number" required min="0" step="0.01" value="${esc(item?.unit_price??0)}"></label><label class="field"><span>ส่วนลด (%)</span><input data-discount type="number" required min="0" max="100" step="any" value="${esc(discountRate(item))}"></label></div>`;
     const picker=()=>{row.originalDiscount=null;row.dataset.existing='';row.querySelector('[data-name]').textContent='เลือกสินค้า';window.ProductCodePicker.mount(row.querySelector('[data-picker]'),catalog.products,p=>{row.dataset.variant=p?.id||'';row.querySelector('[data-name]').textContent=p?.name||'เลือกสินค้า';row.querySelector('[data-price]').value=p?.price??0;row.querySelector('[data-spec]').value=p?.size||'';row.querySelector('[data-discount]').value=0;update();},{lookup:catalog.lookupProducts});row.querySelector('[data-change]')?.remove();update();};
     row.querySelector('[data-remove]').onclick=()=>{row.remove();update();};row.addEventListener('input',update);lines.append(row);
-    if(item)row.querySelector('[data-change]').onclick=picker;else picker();update();
+    const enableNewProduct=()=>window.QuotationEditor.mountNewProduct(row,row.querySelector('[data-picker]'),update);
+    if(item)row.querySelector('[data-change]').onclick=()=>{picker();enableNewProduct();};
+    else {picker();enableNewProduct();}
+    update();
    };
    items.forEach(add);form.querySelector('[data-add]').onclick=()=>add();form.querySelector('[data-cancel]').onclick=()=>{if(!busy)dialog.close();};
    form.onsubmit=async event=>{
