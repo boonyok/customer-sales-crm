@@ -24,7 +24,24 @@
     } catch {}
     return {paymentTerms:'',deliveryTerms:'',notes:raw,rates:[]};
   };
-  const calculate = (rows, products, vatRate=7) => {
+  const specialDiscount = (base, type='amount', value=0) => {
+    const number=Number(value);
+    if(!['amount','percent'].includes(type)||String(value??'').trim()===''||!Number.isFinite(number)||number<0||Math.abs(number*100-Math.round(number*100))>0.000001||(type==='percent'&&number>100))throw Error('ส่วนลดพิเศษไม่ถูกต้อง');
+    const amount=type==='percent'?round(base*number/100):number;
+    if(amount>base)throw Error('ส่วนลดพิเศษต้องไม่เกินยอดหลังส่วนลดรายสินค้า');
+    return amount;
+  };
+  const mountSpecialDiscount = (root, initial={}, onChange=()=>{}) => {
+    const section=document.createElement('section');
+    section.style.cssText='padding:16px;border:1px solid #b9dcec;border-radius:10px;background:#f2faff;margin:16px 0';
+    section.innerHTML='<strong>ส่วนลดพิเศษ</strong><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px"><label class="field"><span>ประเภทส่วนลดพิเศษ</span><select name="specialDiscountType" style="width:100%;padding:10px;font:inherit"><option value="amount">จำนวนบาท</option><option value="percent">เปอร์เซ็นต์ (%)</option></select></label><label class="field"><span>มูลค่าส่วนลดพิเศษ</span><input name="specialDiscountValue" type="number" min="0" step="0.01" value="0" required style="width:100%;padding:10px;font:inherit;box-sizing:border-box"></label></div><small>หักจากยอดหลังส่วนลดรายสินค้า ก่อนคิด VAT</small>';
+    const type=section.querySelector('select'),value=section.querySelector('input');
+    type.value=initial.type||'amount';value.value=String(initial.value??0);
+    section.addEventListener('input',onChange);section.addEventListener('change',onChange);
+    root.before(section);
+    return ()=>({type:type.value,value:value.value});
+  };
+  const calculate = (rows, products, vatRate=7, special={type:'amount',value:0}) => {
     if (!rows.length) throw Error('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ');
     const items = rows.map((row,index) => {
       const product = products.find(p => p.id === row.variantId);
@@ -36,9 +53,11 @@
       return {position:index+1,product_variant_id:product.id,sku_snapshot:product.sku,product_name_snapshot:product.name,specification_snapshot:String(row.specification??product.size??''),unit_snapshot:product.unit||'ชิ้น',quantity,unit_price:price,discount_amount:discount,line_total:round(gross-discount)};
     });
     const subtotal=round(items.reduce((s,i)=>s+round(i.quantity*i.unit_price),0));
-    const discount_amount=round(items.reduce((s,i)=>s+i.discount_amount,0));
+    const lineDiscount=round(items.reduce((s,i)=>s+i.discount_amount,0));
+    const special_discount_amount=specialDiscount(round(subtotal-lineDiscount),special.type,special.value);
+    const discount_amount=round(lineDiscount+special_discount_amount);
     const taxable_amount=round(subtotal-discount_amount), vat_amount=round(taxable_amount*vatRate/100);
-    return {items,subtotal,discount_amount,taxable_amount,vat_rate:vatRate,vat_amount,grand_total:round(taxable_amount+vat_amount)};
+    return {items,subtotal,discount_amount,taxable_amount,vat_rate:vatRate,vat_amount,grand_total:round(taxable_amount+vat_amount),special_discount_type:special.type,special_discount_value:Number(special.value),special_discount_amount};
   };
   const rateFor = (item, index, details) => {
     const rate=details.rates[index];
@@ -77,8 +96,8 @@
       [...container.children].forEach((row,i)=>row.querySelector('strong').textContent=`รายการที่ ${i+1}`);
       root.querySelector('[data-qe-count]').textContent=`${container.children.length} รายการ`;
       try {
-        const totals = calculate(read(), products, selectedVatRate());
-        const subtotal = 'รวม ' + money(totals.subtotal) + ' บาท • ส่วนลด ' + money(totals.discount_amount) + ' บาท';
+        const totals = calculate(read(), products, selectedVatRate(), readSpecialDiscount());
+        const subtotal = 'รวม '+money(totals.subtotal)+' บาท • ส่วนลดรายสินค้า '+money(totals.discount_amount-totals.special_discount_amount)+' บาท\nส่วนลดพิเศษ '+money(totals.special_discount_amount)+' บาท';
         const net = 'ยอดสุทธิ ' + money(totals.grand_total) + ' บาท';
         const vat = totals.vat_rate === 0 ? 'ไม่มี VAT' :
           'ก่อน VAT ' + money(totals.taxable_amount) + ' บาท • VAT ' + totals.vat_rate + '% ' + money(totals.vat_amount) + ' บาท';
@@ -87,6 +106,7 @@
         root.querySelector('.qe-total').textContent = error.message;
       }
     };
+    const readSpecialDiscount = cash ? ()=>({type:'amount',value:0}) : mountSpecialDiscount(root.querySelector('.qe-total'),{},update);
     vatMode?.addEventListener('change', update);
     const add=()=>{
       const row=document.createElement('div');row.className='qe-row';
@@ -100,7 +120,7 @@
     const customerSelect=root.querySelector('[name=customerId]');
     customerSelect.onchange=()=>{const rate=defaultRate();container.querySelectorAll('[data-discount]').forEach(input=>{if(!input.dataset.manual)input.value=String(rate);});discountNotice.textContent=`ส่วนลดประจำลูกค้า ${rate}% • เติมให้อัตโนมัติในรายการใหม่ • แก้ไขรายรายการได้ (รายการที่แก้เองจะไม่ถูกทับเมื่อเปลี่ยนลูกค้า)`;update();};
     customerSelect.onchange();if(cash)root.querySelector('[name=issueDate]').value=issueDate();else{const date=root.querySelector('[name=expires]'),months=root.querySelector('[name=validityMonths]');date.value=addMonths(issueDate(),1);months.onchange=()=>{date.value=addMonths(issueDate(),Number(months.value));};}add();
-    return {read, selectedVatRate};
+    return {read, selectedVatRate, readSpecialDiscount};
   };
-  window.QuotationEditor={encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths,paymentWithDueDate,paymentOptions};
+  window.QuotationEditor={specialDiscount,mountSpecialDiscount,encode,decode,calculate,rateFor,persist,mount,issueDate,numberExample,addMonths,paymentWithDueDate,paymentOptions};
 })();
