@@ -201,7 +201,10 @@
     const withoutVat = doc.kind === 'quotation' && doc.vat_rate != null && Number(doc.vat_rate) === 0;
     const amounts = billing ? [] : [
       ['รวมก่อนส่วนลด', doc.subtotal],
-      ['ส่วนลด', doc.discount_amount],
+      ...(doc.kind==='quotation'&&Number(doc.special_discount_amount)>0 ? [
+        ['ส่วนลดรายสินค้า',Number(doc.discount_amount)-Number(doc.special_discount_amount)],
+        ['ส่วนลดพิเศษ'+(doc.special_discount_type==='percent'?' ('+doc.special_discount_value+'%)':''),doc.special_discount_amount]
+      ] : [['ส่วนลด',doc.discount_amount]]),
       ...(!cash && !withoutVat ? [
         ['มูลค่าก่อน VAT', doc.taxable_amount],
         ['VAT ' + (doc.vat_rate ?? 0) + '%', doc.vat_amount]
